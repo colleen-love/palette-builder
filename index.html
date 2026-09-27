@@ -1303,11 +1303,16 @@ function rgb2lab(c){const l=c.map(v=>{v/=255;return v<=0.04045?v/12.92:((v+0.055
  const X=(l[0]*.4124+l[1]*.3576+l[2]*.1805)/.95047,Y=l[0]*.2126+l[1]*.7152+l[2]*.0722,Z=(l[0]*.0193+l[1]*.1192+l[2]*.9505)/1.08883;
  const f=t=>t>0.008856?Math.cbrt(t):7.787*t+16/116;return[116*f(Y)-16,500*(f(X)-f(Y)),200*(f(Y)-f(Z))]}
 P.forEach((p,i)=>{p.i=i;p.lat=mixbox.rgbToLatent(p.arr)});
+// Mixbox works inside the sRGB gamut, so vivid paints get pulled inward at the ends of the path.
+// Shift the simulated path by the endpoint error so it starts and ends on each paint's measured color.
+function mixPath(A,B,n){const z=new Array(mixbox.LATENT_SIZE),M=[];
+ for(let s=0;s<=n;s++){const t=s/n;for(let j=0;j<z.length;j++)z[j]=A.lat[j]*(1-t)+B.lat[j]*t;M.push(rgb2lab(mixbox.latentToRgb(z)))}
+ const e0=[A.L-M[0][0],A.a-M[0][1],A.b-M[0][2]],e1=[B.L-M[n][0],B.a-M[n][1],B.b-M[n][2]];
+ return M.map((m,s)=>{const t=s/n;return m.map((v,k)=>v+(1-t)*e0[k]+t*e1[k])})}
 const curveCache=new Map();
 function curve(A,B){const k=A.i<B.i?A.i*1000+B.i:B.i*1000+A.i;let c=curveCache.get(k);if(c)return c;
- const[a,b]=A.i<B.i?[A,B]:[B,A];c=new Float64Array((SEG+1)*2);c[0]=a.a;c[1]=a.b;c[SEG*2]=b.a;c[SEG*2+1]=b.b;
- const n=mixbox.LATENT_SIZE,z=new Array(n);
- for(let s=1;s<SEG;s++){const t=s/SEG;for(let j=0;j<n;j++)z[j]=a.lat[j]*(1-t)+b.lat[j]*t;const L=rgb2lab(mixbox.latentToRgb(z));c[s*2]=L[1];c[s*2+1]=L[2]}
+ const[a,b]=A.i<B.i?[A,B]:[B,A];c=new Float64Array((SEG+1)*2);
+ mixPath(a,b,SEG).forEach((L,s)=>{c[s*2]=L[1];c[s*2+1]=L[2]});
  curveCache.set(k,c);return c}
 const binOf=th=>{let k=Math.floor(((th%(2*Math.PI))+2*Math.PI)%(2*Math.PI)/DTH);return k>=BINS?0:k};
 function addPoint(env,x,y){const r=Math.hypot(x,y),k=binOf(Math.atan2(y,x));if(r>env[k])env[k]=r}
@@ -1379,8 +1384,9 @@ function renderMix(){
  const bars=document.getElementById("bars");bars.innerHTML="";
  const ms=st.mix.map(n=>byName[n]).sort(hueSort),[A,B]=ms;
  const pts=[];
- if(B){for(let k=0;k<STEPS;k++){const t=k/(STEPS-1),c=mixColor(A,B,t);pts.push({t,hex:c.toString(),lab:xyzLab(c.XYZ)})}}
- else if(A)pts.push({t:0,hex:specOf(A).toString(),lab:[A.L,A.a,A.b]});
+ const hexOf=L=>"#"+lab2arr(...L).map(v=>v.toString(16).padStart(2,"0")).join("");
+ if(B)mixPath(A,B,STEPS-1).forEach((L,k)=>pts.push({t:k/(STEPS-1),hex:hexOf(L),lab:L}));
+ else if(A)pts.push({t:0,hex:hexOf([A.L,A.a,A.b]),lab:[A.L,A.a,A.b]});
  const gA=A&&A.gran==="G",gB=B&&B.gran==="G";
  const g=gA&&gB?"Both granulate":gA?`${A.n} granulates`:gB?`${B.n} granulates`:"";
  const label=B?`${A.n} → ${B.n}`:A?`${A.n} → <span class="muted">pick one more paint</span>`:`<span class="muted">Pick two paints from your palette</span>`;
@@ -1394,10 +1400,11 @@ function renderMix(){
 }
 function mixChart(A,B,pts){
  const fig=document.createElement("figure");fig.className="mchart";
- const svg=el("svg",{viewBox:"-122 -122 244 244",role:"img","aria-label":B?`Mixing path from ${A.n} to ${B.n} on the a*b* color plane`:"Empty a*b* color plane for mixing"},fig);
+ const svg=el("svg",{viewBox:"-124 -124 248 248",role:"img","aria-label":B?`Mixing path from ${A.n} to ${B.n} on the a*b* color plane`:"Empty a*b* color plane for mixing"},fig);
  for(const r of [20,40,60,80,100]){el("circle",{r,fill:"none",stroke:"var(--rule)","stroke-width":r===100?.5:.3},svg);const t=el("text",{x:1.2,y:-r-1,"font-size":3.2,fill:"var(--graphite)"},svg);t.textContent=r}
- el("line",{x1:-104,y1:0,x2:104,y2:0,stroke:"var(--rule)","stroke-width":.4},svg);el("line",{x1:0,y1:-104,x2:0,y2:104,stroke:"var(--rule)","stroke-width":.4},svg);
- [["↑ yellow b*+",2,-106,"start"],["↓ blue b*−",2,110,"start"],["← green a*−",-104,-2,"start"],["magenta a*+ →",104,-2,"end"]].forEach(([s,x,y,a])=>{const t=el("text",{x,y,"font-size":3.6,fill:"var(--graphite)","text-anchor":a},svg);t.textContent=s});
+ // same grid and hue ring as the wheel at the top of the page
+ for(let d=0;d<360;d+=30){const rad=d*Math.PI/180;el("line",{x1:0,y1:0,x2:100*Math.cos(rad),y2:-100*Math.sin(rad),stroke:"var(--rule)","stroke-width":.25},svg);const t=el("text",{x:117*Math.cos(rad),y:-117*Math.sin(rad)+1.1,"font-size":3.2,fill:"var(--graphite)","text-anchor":"middle"},svg);t.textContent=d+"°"}
+ svg.appendChild(document.getElementById("ring").cloneNode(true)).removeAttribute("id");
  if(B){const P0=pts[0].lab,P1=pts[pts.length-1].lab;el("line",{x1:P0[1],y1:-P0[2],x2:P1[1],y2:-P1[2],stroke:"var(--graphite)","stroke-width":.5,"stroke-dasharray":"1.6 1.4"},svg)}
  pts.forEach((p,i)=>{const end=i===0||i===pts.length-1;const c=el("circle",{cx:p.lab[1],cy:-p.lab[2],r:end?3.4:1.7,fill:p.hex,stroke:end?"var(--ink)":"none","stroke-width":.5},svg);
   const tt=el("title",{},c);if(B){const pa=Math.round((1-p.t)*100);tt.textContent=`${pa}% ${A.n} · ${100-pa}% ${B.n}\nL ${p.lab[0].toFixed(0)}, a ${p.lab[1].toFixed(0)}, b ${p.lab[2].toFixed(0)}`}else tt.textContent=A.n});

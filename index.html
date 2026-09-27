@@ -125,6 +125,10 @@ input[type=search]{width:100%;font:inherit;font-size:15px;padding:7px 12px;borde
 .mchart figcaption{margin-top:4px}
 .strip.pending{border-style:dashed;border-color:var(--rule)}
 .bl .muted{color:var(--graphite)}
+.palhead{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 18px;margin:0 0 8px}
+.palhead h2{margin:0!important}
+.palbtns{display:flex;flex-wrap:wrap;gap:6px}
+.palbtns button{font-size:13px;padding:3px 11px}
 #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--paper);font-size:13px;padding:5px 9px;border-radius:6px;opacity:0;transition:opacity .1s;white-space:nowrap;z-index:5}
 @media (prefers-reduced-motion:reduce){#tip{transition:none}}
 </style>
@@ -149,10 +153,7 @@ input[type=search]{width:100%;font:inherit;font-size:15px;padding:7px 12px;borde
 <label><input type="checkbox" id="showMine" checked> My palette</label>
 <label><input type="checkbox" id="showAll" checked> Other paints</label>
 <label><input type="checkbox" id="showLab" checked> Names</label>
-<label><input type="checkbox" id="showBase" checked> Starting outline</label>
-<button id="setBase">Make this the starting outline</button>
-<button id="reset">Reset to starting outline</button>
-<button id="clearPal">Clear palette</button>
+<label><input type="checkbox" id="showBase" checked> Stored palette outline</label>
 </div>
 <div id="info" class="info-anchor">Hover or tap a dot for its numbers. Tap to add it to your palette.</div>
 </section>
@@ -182,7 +183,7 @@ input[type=search]{width:100%;font:inherit;font-size:15px;padding:7px 12px;borde
 <p class="fine">Color data: masstone measurements from <a href="https://artistpigments.org/brands/daniel-smith-extra-fine-watercolors">artistpigments.org</a> (CC BY-NC 4.0), handmade samples measured with a Nix Spectro 2. Earthy Light Red and Coral Reef aren't measured there yet, so they use Daniel Smith's <a href="https://danielsmith.com/daniel-smith-watercolors-cie-lab-coordinates/">published CIE Lab values</a>. Lightfastness, staining, granulation, transparency and price series: Daniel Smith's <a href="https://danielsmith.com/wp-content/uploads/2021/05/DS-Watercolor-pigment-characteristics.pdf">2021 pigment characteristics sheet</a>, plus retailer listings for King's Royal Blue and McCracken Black. Paints added after 2021 (the 2025 releases, both Jane's Blacks, Chrome Titanate Yellow) use Daniel Smith's own color-story pages. Single pigment means one Colour Index pigment on the label; PrimaTek minerals count as single. Reach is the area your palette covers in the a*b* plane, traced along the simulated mixing curve between every pair of your paints (Mixbox) rather than straight lines, so it bows inward between distant hues and outward between neighbors. It's a simulation from each paint's measured color, so treat it as a guide, not a measurement. The wheel doesn't show lightness; use the Lightness filter (0 is black, 100 is white) to narrow by it.</p>
 </aside>
 <section class="r3l">
-<h2>Your palette <span class="count" id="palCount"></span></h2>
+<div class="palhead"><h2>Your palette <span class="count" id="palCount"></span></h2><div class="palbtns"><button id="clearPal">Clear palette</button><button id="setBase">Store palette</button><button id="reset">Reset to stored palette</button></div></div>
 <ul id="pal"></ul>
 </section>
 <aside class="r3r">
@@ -1360,7 +1361,7 @@ function render(){
  document.getElementById("fpct").textContent=fA?Math.min(100,Math.round(sA/fA*100))+"%":"–";
  document.getElementById("fnote").textContent=out?`${out} of your paints ${out===1?"is":"are"} outside your filters and not counted here.`:"";
  document.getElementById("fcount").textContent=`${pool.length} of ${P.length} paints match.`;
- const d=bA?((A-bA)/bA*100):0;document.getElementById("delta").textContent=bA?(Math.abs(d)<0.05?"Same reach as your starting outline.":`${d>0?"+":""}${d.toFixed(1)}% compared with your starting outline.`):"";
+ const d=bA?((A-bA)/bA*100):0;document.getElementById("delta").textContent=bA?(Math.abs(d)<0.05?"Same reach as your stored palette.":`${d>0?"+":""}${d.toFixed(1)}% compared with your stored palette.`):"";
 const gains=M.gains??=pool.filter(p=>!st.sel.includes(p.n)).map(p=>{if(!A)return{p,g:0};const e=E.slice();addPoint(e,p.a,p.b);sel.forEach(q=>addPair(e,p,q));return{p,g:(envArea(e)-A)/A*100}}).filter(o=>o.g>=0.5).sort((a,b)=>b.g-a.g).slice(0,6);
  const gu=document.getElementById("gains");gu.innerHTML="";
  if(sel.length<2)gu.innerHTML='<li class="fine">Add at least two paints to see your outline and what would widen it.</li>';

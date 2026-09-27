@@ -64,7 +64,11 @@ input[type=search]{width:100%;font:inherit;font-size:15px;padding:7px 12px;borde
 .water output{min-width:3.2em;font-variant-numeric:tabular-nums;color:var(--ink)}
 .mgrid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:32px;align-items:start}
 @media (max-width:900px){.mgrid{grid-template-columns:1fr}}
-.mpick .row{cursor:default}
+.mpick .row{cursor:pointer}
+.mpick input{accent-color:var(--ink);margin:0}
+.mpick .row.dis{opacity:.45;cursor:default}
+.mctl{display:flex;align-items:center;gap:6px 16px;flex-wrap:wrap;margin:2px 0 8px}
+.mctl .mclear{margin:0}.mctl .fopt{margin:0}
 .mrow{display:grid;grid-template-columns:28px 28px 18px 1fr;align-items:center;gap:0 8px}
 .mrow input{justify-self:center}
 .mhead-row{display:grid;grid-template-columns:28px 28px 18px 1fr;gap:0 8px;font-size:12px;color:var(--graphite);padding:0 6px 2px;text-align:center}
@@ -195,15 +199,15 @@ input[type=search]{width:100%;font:inherit;font-size:15px;padding:7px 12px;borde
 <div class="r4">
 <section class="r4l mpick" aria-labelledby="mixh">
 <h2 id="mixh" class="mixh">Mixing</h2>
-<p class="fine" style="margin:0 0 6px">Pick a base paint, then up to three paints to mix with it, to compare their mixes side by side.</p>
-<button id="mixClear" class="mclear">Clear selection</button>
+<p class="fine" style="margin:0 0 6px">Pick paints from your palette to see the mixing path between every pair. Turn on three-paint mixes to see everything three paints can make together.</p>
+<div class="mctl"><button id="mixClear" class="mclear">Clear selection</button><label class="fopt"><input type="checkbox" id="mix3"> Three-paint mixes</label></div>
 <ul id="mixPal"></ul>
 </section>
 <section class="r4r" aria-label="Simulated mixes">
 <div id="bars"></div>
 </section>
 </div>
-<footer class="r5"><p class="fine" id="mixNote">Mixes are simulated with <a href="https://github.com/scrtwpns/mixbox">Mixbox</a> (Secret Weapons, CC BY-NC 4.0), the same pigment-mixing model artistpigments.org uses for its mixing paths, starting from the same measured colors. Real tinting strength isn't known, so a staining phthalo will dominate more on paper than here. Mixes start from each paint's masstone, the same color as its dot on the wheel; spectral.js (MIT) handles the color conversions. Texture marks the side of a strip where a paint granulates. Treat it as a preview and confirm on paper.</p></footer>
+<footer class="r5"><p class="fine" id="mixNote">Mixes are simulated with <a href="https://github.com/scrtwpns/mixbox">Mixbox</a> (Secret Weapons, CC BY-NC 4.0), the same pigment-mixing model artistpigments.org uses for its mixing paths, starting from the same measured colors. Real tinting strength isn't known, so a staining phthalo will dominate more on paper than here. Mixes start from each paint's masstone, the same color as its dot on the wheel; spectral.js (MIT) handles the color conversions. Treat it as a preview and confirm on paper.</p></footer>
 </div>
 <div id="tip"></div>
 <script>
@@ -1243,7 +1247,7 @@ function hull(pts){pts=[...pts].sort((p,q)=>p.x-q.x||p.y-q.y);if(pts.length<3)re
 function area(h){if(h.length<3)return 0;let s=0;for(let i=0;i<h.length;i++){const a=h[i],b=h[(i+1)%h.length];s+=a.x*b.y-b.x*a.y}return Math.abs(s)/2}
 
 const DEFF={lf:[],pig:["any"],trans:[],stain:[],gran:["any"],series:[],light:[0,100],missing:true};
-function load(){let s={sel:[...MINE],base:[...MINE],mix:[],mixBase:null,water:60},f=JSON.parse(JSON.stringify(DEFF));try{const v=JSON.parse(localStorage.getItem("dswheel:public:v1")||"null");if(v){if(Array.isArray(v.sel))s.sel=v.sel.filter(n=>byName[n]);if(Array.isArray(v.base))s.base=v.base.filter(n=>byName[n]);if(Array.isArray(v.mix))s.mix=v.mix.filter(n=>byName[n]);if(typeof v.mixBase==="string"&&byName[v.mixBase])s.mixBase=v.mixBase;else if(v.mixBase===undefined&&s.mix.length){s.mixBase=s.mix[0];s.mix=s.mix.slice(1)}s.mix=s.mix.slice(0,3);if(typeof v.water==="number")s.water=v.water;if(v.f)f=Object.assign(f,v.f);if(!Array.isArray(f.series))f.series=[];if(!Array.isArray(f.light)||f.light.length!==2)f.light=[0,100];if(f.lf.includes("any"))f.lf=[];else if(f.lf.length===1&&f.lf[0]==="2"&&!v.f.lfMulti)f.lf=["1","2"];f.lfMulti=true}}catch(e){}return{...s,f}}
+function load(){let s={sel:[...MINE],base:[...MINE],mix:[],mix3:false,water:60},f=JSON.parse(JSON.stringify(DEFF));try{const v=JSON.parse(localStorage.getItem("dswheel:public:v1")||"null");if(v){if(Array.isArray(v.sel))s.sel=v.sel.filter(n=>byName[n]);if(Array.isArray(v.base))s.base=v.base.filter(n=>byName[n]);if(Array.isArray(v.mix))s.mix=v.mix.filter(n=>byName[n]);if(typeof v.mixBase==="string"&&byName[v.mixBase]&&!s.mix.includes(v.mixBase))s.mix.unshift(v.mixBase);s.mix3=!!v.mix3;if(typeof v.water==="number")s.water=v.water;if(v.f)f=Object.assign(f,v.f);if(!Array.isArray(f.series))f.series=[];if(!Array.isArray(f.light)||f.light.length!==2)f.light=[0,100];if(f.lf.includes("any"))f.lf=[];else if(f.lf.length===1&&f.lf[0]==="2"&&!v.f.lfMulti)f.lf=["1","2"];f.lfMulti=true}}catch(e){}return{...s,f}}
 let st=load();
 function save(){try{localStorage.setItem("dswheel:public:v1",JSON.stringify(st))}catch(e){}}
 // why a paint fails the filters (empty array = passes)
@@ -1266,7 +1270,7 @@ for(let d=0;d<360;d+=2.5){const a1=d*Math.PI/180,a2=(d+2.6)*Math.PI/180,r1=105,r
 const tip=document.getElementById("tip"),info=document.getElementById("info");
 function describe(p){const props=[p.mix?"Mixture":"Single pigment",p.lf?LFNAME[p.lf]:"Lightfastness not listed",p.trans?TNAME[p.trans]:null,p.stain?SNAME[p.stain]:null,p.gran?(p.gran==="G"?"Granulating":"Non-granulating"):null,p.series?"Series "+p.series:null].filter(Boolean);
  const w=fails(p);return `<b>${p.n}</b> ${dsLink(p)}${SRC_DS.includes(p.n)?" · color from Daniel Smith's data (not yet measured by artistpigments.org)":""}${st.sel.includes(p.n)?" · in your palette":""}<br>Hue ${p.h.toFixed(1)}°, chroma ${p.C.toFixed(1)}, lightness ${p.L}<br>${props.join(" · ")}${p.stain?"":" · other properties not listed"}${w.length?`<br>Outside your filters: ${w.join(", ")}`:""}`}
-function toggle(n){const i=st.sel.indexOf(n);if(i>=0){st.sel.splice(i,1);st.mix=st.mix.filter(m=>m!==n);if(st.mixBase===n)st.mixBase=null}else st.sel.push(n);save();render()}
+function toggle(n){const i=st.sel.indexOf(n);if(i>=0){st.sel.splice(i,1);st.mix=st.mix.filter(m=>m!==n)}else st.sel.push(n);save();render()}
 const allg=document.getElementById("allg");
 P.forEach(p=>{const c=el("circle",{cx:p.x,cy:p.y,r:1.5,fill:p.rgb,stroke:"var(--paper)","stroke-width":.3,tabindex:0,role:"button","aria-label":p.n,style:"cursor:pointer"},allg);p.dot=c;
  c.addEventListener("pointerenter",()=>{tip.textContent=p.n;tip.style.opacity=1;info.innerHTML=describe(p)});
@@ -1368,7 +1372,7 @@ q.addEventListener("input",search);
 document.getElementById("setBase").onclick=()=>{st.base=[...st.sel];save();render()};
 document.getElementById("reset").onclick=()=>{st.sel=[...MINE];save();render()};
 // ---- mixing ----
-const MAXMIX=3,STEPS=41;
+const MAXMIX=99,STEPS=41;
 const toLin=v=>{v/=255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4},toS=v=>{v=v<=0.0031308?12.92*v:1.055*v**(1/2.4)-0.055;return Math.round(Math.max(0,Math.min(1,v))*255)};
 const kmInv=k=>1+k-Math.sqrt(k*k+2*k);
 const specOf=p=>p.spec??=new spectral.Color(p.arr);
@@ -1378,57 +1382,54 @@ function xyzLab([X,Y,Z]){const f=t=>t>0.008856?Math.cbrt(t):7.787*t+16/116;const
 const TEX=`url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 .25  0 0 0 0 .22  0 0 0 0 .2  0 0 0 -2.6 1.35"/></filter><rect width="120" height="120" filter="url(#n)"/></svg>')}")`;
 function renderMix(){
  const box=document.getElementById("mixPal");box.innerHTML="";
- if(st.mixBase&&!st.sel.includes(st.mixBase))st.mixBase=null;st.mix=st.mix.filter(n=>st.sel.includes(n)&&n!==st.mixBase);
- const full=st.mix.length>=MAXMIX;document.getElementById("mixClear").disabled=!st.mix.length&&!st.mixBase;
+ st.mix=st.mix.filter(n=>st.sel.includes(n));if(st.mix3)st.mix=st.mix.slice(0,3);
+ const full=st.mix3&&st.mix.length>=3;document.getElementById("mixClear").disabled=!st.mix.length;
+ document.getElementById("mix3").checked=!!st.mix3;
  if(!st.sel.length)box.innerHTML='<li class="fine">Your palette is empty. Add paints on the wheel first.</li>';
- else{const hd=document.createElement("li");hd.className="mhead-row";hd.innerHTML='<span>Base</span><span>Mix</span><span></span>';box.appendChild(hd)}
- st.sel.map(n=>byName[n]).sort(hueSort).forEach(p=>{const isB=st.mixBase===p.n,on=st.mix.includes(p.n),dis=isB||(full&&!on);
-  const li=document.createElement("li");li.className="row mrow"+(isB||on?" picked":"");
-  li.innerHTML=`<input type="radio" name="mixbase" ${isB?"checked":""} aria-label="Use ${p.n} as the base"><input type="checkbox" ${on?"checked":""} ${dis?"disabled":""} aria-label="Mix ${p.n} with the base"><span class="sw" style="background:${p.rgb}"></span><span class="nm">${p.n}${p.gran==="G"?'<br><span class="note">Granulating</span>':""}</span>`;
-  const [rb,cb]=li.querySelectorAll("input");
-  rb.addEventListener("change",()=>{st.mixBase=p.n;st.mix=st.mix.filter(m=>m!==p.n);save();renderMix()});
-  cb.addEventListener("change",()=>{if(on)st.mix=st.mix.filter(m=>m!==p.n);else st.mix.push(p.n);save();renderMix()});
-  box.appendChild(li)});
+ st.sel.map(n=>byName[n]).sort(hueSort).forEach(p=>{const on=st.mix.includes(p.n),dis=full&&!on;const li=document.createElement("li");li.className="row"+(dis?" dis":"")+(on?" picked":"");
+  li.innerHTML=`<input type="checkbox" ${on?"checked":""} ${dis?"disabled":""} aria-label="Mix ${p.n}"><span class="sw" style="background:${p.rgb}"></span><span class="nm">${p.n}${p.gran==="G"?'<br><span class="note">Granulating</span>':""}</span>`;
+  const cb=li.querySelector("input");const flip=()=>{if(dis)return;if(on)st.mix=st.mix.filter(m=>m!==p.n);else st.mix.push(p.n);save();renderMix()};
+  cb.addEventListener("change",flip);li.addEventListener("click",e=>{if(e.target!==cb)flip()});box.appendChild(li)});
  const bars=document.getElementById("bars");bars.innerHTML="";
- const A=st.mixBase?byName[st.mixBase]:null,Bs=st.mix.map(n=>byName[n]).sort(hueSort);
- const hexOf=L=>"#"+lab2arr(...L).map(v=>v.toString(16).padStart(2,"0")).join("");
- const paths=A?Bs.map(B=>({B,pts:mixPath(A,B,STEPS-1).map((L,k)=>({t:k/(STEPS-1),hex:hexOf(L),lab:L}))})):[];
- const addBar=(labelHtml,g,img,pending,mask,idx)=>{const d=document.createElement("div");d.className="bar";
-  d.innerHTML=`<div class="bl"><span>${labelHtml}</span><span class="g">${g}</span></div><div class="strip${pending?" pending":""}"></div>`;
-  const sEl=d.querySelector(".strip");sEl.style.backgroundImage=img;
-  if(mask){const tx=document.createElement("div");tx.className="tex";tx.style.backgroundImage=TEX;tx.style.maskImage=mask;tx.style.webkitMaskImage=mask;tx.style.opacity="0.35";sEl.appendChild(tx)}
-  if(idx!=null){d.addEventListener("pointerenter",()=>hilite(idx));d.addEventListener("pointerleave",()=>hilite(null))}
-  bars.appendChild(d)};
- if(!A)addBar('<span class="muted">Pick a base paint, then up to three paints to mix with it</span>',"","none",true,null,null);
- else if(!paths.length){const hx=hexOf([A.L,A.a,A.b]);addBar(`${A.n} → <span class="muted">pick paints to mix with it</span>`,A.gran==="G"?`${A.n} granulates`:"",`linear-gradient(to right, ${hx} 0 50%, transparent 50%)`,true,A.gran==="G"?"linear-gradient(to right, #000 0 50%, transparent 50%)":null,null)}
- paths.forEach(({B,pts},i)=>{const gA=A.gran==="G",gB=B.gran==="G";
-  const g=gA&&gB?"Both granulate":gA?`${A.n} granulates`:gB?`${B.n} granulates`:"";
-  addBar(`${A.n} → ${B.n}`,g,`linear-gradient(to right, ${pts.map(p=>`${p.hex} ${(p.t*100).toFixed(2)}%`).join(",")})`,false,(gA||gB)?`linear-gradient(to right, rgba(0,0,0,${gA?1:0}), rgba(0,0,0,${gB?1:0}))`:null,i)});
- bars.appendChild(mixChart(A,paths))
+ bars.appendChild(mixChart(st.mix.map(n=>byName[n]).sort(hueSort)))
 }
-function hilite(i){document.querySelectorAll(".mchart .mpath").forEach((g,k)=>g.style.opacity=i==null||k===i?1:.15)}
-function mixChart(A,paths){
+// three-way Mixbox mixes over a barycentric grid, corrected so the corners land on the measured colors
+function mixTri(A,B,C,n){const P=[A,B,C],z=new Array(mixbox.LATENT_SIZE),out=[];
+ const mix=w=>{for(let j=0;j<z.length;j++)z[j]=w[0]*A.lat[j]+w[1]*B.lat[j]+w[2]*C.lat[j];return rgb2lab(mixbox.latentToRgb(z))};
+ const err=P.map((p,k)=>{const w=[0,0,0];w[k]=1;const m=mix(w);return[p.L-m[0],p.a-m[1],p.b-m[2]]});
+ for(let i=0;i<=n;i++)for(let j=0;j<=n-i;j++){const w=[i/n,j/n,(n-i-j)/n],m=mix(w);out.push({w,lab:m.map((v,k)=>v+w[0]*err[0][k]+w[1]*err[1][k]+w[2]*err[2][k])})}
+ return out}
+function hilite(sel){document.querySelectorAll(".mchart .mpath").forEach(g=>{const on=sel==null||g.dataset.a===sel||g.dataset.b===sel||g.dataset.k===sel;g.style.opacity=on?1:.12})}
+function mixChart(ms){
+ const hexOf=L=>"#"+lab2arr(...L).map(v=>v.toString(16).padStart(2,"0")).join("");
  const fig=document.createElement("figure");fig.className="mchart";
- const svg=el("svg",{viewBox:"-124 -124 248 248",role:"img","aria-label":A?`Mixing paths from ${A.n} on the a*b* color plane`:"Empty a*b* color plane for mixing"},fig);
+ const svg=el("svg",{viewBox:"-124 -124 248 248",role:"img","aria-label":ms.length?`Mixing paths between ${ms.map(p=>p.n).join(", ")} on the a*b* color plane`:"Empty a*b* color plane for mixing"},fig);
  for(const r of [20,40,60,80,100]){el("circle",{r,fill:"none",stroke:"var(--rule)","stroke-width":r===100?.5:.3},svg);const t=el("text",{x:1.2,y:-r-1,"font-size":3.2,fill:"var(--graphite)"},svg);t.textContent=r}
  // same grid and hue ring as the wheel at the top of the page
  for(let d=0;d<360;d+=30){const rad=d*Math.PI/180;el("line",{x1:0,y1:0,x2:100*Math.cos(rad),y2:-100*Math.sin(rad),stroke:"var(--rule)","stroke-width":.25},svg);const t=el("text",{x:117*Math.cos(rad),y:-117*Math.sin(rad)+1.1,"font-size":3.2,fill:"var(--graphite)","text-anchor":"middle"},svg);t.textContent=d+"°"}
  svg.appendChild(document.getElementById("ring").cloneNode(true)).removeAttribute("id");
+ const tri=st.mix3&&ms.length===3;
+ if(tri){const[A,B,C]=ms,g=el("g",{},svg);
+  mixTri(A,B,C,14).forEach(({w,lab})=>{const c=el("circle",{cx:lab[1],cy:-lab[2],r:1.6,fill:hexOf(lab),"fill-opacity":.95},g);
+   el("title",{},c).textContent=ms.map((p,k)=>`${Math.round(w[k]*100)}% ${p.n}`).filter(s=>!s.startsWith("0%")).join(" · ")+`\nL ${lab[0].toFixed(0)}, a ${lab[1].toFixed(0)}, b ${lab[2].toFixed(0)}`})}
+ else{const n=ms.length>6?16:STEPS-1,rad=ms.length>6?1.1:1.6;
+  for(let i=0;i<ms.length;i++)for(let j=i+1;j<ms.length;j++){const A=ms[i],B=ms[j];
+   const g=el("g",{class:"mpath"},svg);g.dataset.a=A.n;g.dataset.b=B.n;g.dataset.k=A.n+"|"+B.n;
+   g.addEventListener("pointerenter",()=>hilite(A.n+"|"+B.n));g.addEventListener("pointerleave",()=>hilite(null));
+   mixPath(A,B,n).forEach((L,k)=>{if(k===0||k===n)return;const t=k/n,c=el("circle",{cx:L[1],cy:-L[2],r:rad,fill:hexOf(L)},g);
+    const pa=Math.round((1-t)*100);el("title",{},c).textContent=`${pa}% ${A.n} · ${100-pa}% ${B.n}\nL ${L[0].toFixed(0)}, a ${L[1].toFixed(0)}, b ${L[2].toFixed(0)}`})}}
  const placed=[];
  const label=(p,L)=>{const r=Math.hypot(L[1],L[2])||1,ux=L[1]/r,uy=-L[2]/r;let off=6,x,y;
-  // nudge labels outward until they clear ones already placed
   for(let k=0;k<8;k++){x=L[1]+ux*off;y=-L[2]+uy*off+1.2;if(!placed.some(q=>Math.abs(q[0]-x)<22&&Math.abs(q[1]-y)<4.6))break;off+=5}
   placed.push([x,y]);const t=el("text",{x,y,"font-size":3.8,fill:"var(--ink)","text-anchor":Math.abs(ux)<.3?"middle":ux>0?"start":"end","paint-order":"stroke",stroke:"var(--paper)","stroke-width":1.2,"pointer-events":"none"},svg);t.textContent=p.n};
- paths.forEach(({B,pts},i)=>{const g=el("g",{class:"mpath"},svg);g.addEventListener("pointerenter",()=>hilite(i));g.addEventListener("pointerleave",()=>hilite(null));
-  const P0=pts[0].lab,P1=pts[pts.length-1].lab;el("line",{x1:P0[1],y1:-P0[2],x2:P1[1],y2:-P1[2],stroke:"var(--graphite)","stroke-width":.4,"stroke-dasharray":"1.6 1.4"},g);
-  pts.forEach((p,k)=>{if(k===0)return;const end=k===pts.length-1;const c=el("circle",{cx:p.lab[1],cy:-p.lab[2],r:end?3.4:1.7,fill:p.hex,stroke:end?"var(--ink)":"none","stroke-width":.5},g);
-   const pa=Math.round((1-p.t)*100);el("title",{},c).textContent=`${pa}% ${A.n} · ${100-pa}% ${B.n}\nL ${p.lab[0].toFixed(0)}, a ${p.lab[1].toFixed(0)}, b ${p.lab[2].toFixed(0)}`});
-  label(B,P1)});
- if(A){const c=el("circle",{cx:A.a,cy:-A.b,r:3.8,fill:A.rgb,stroke:"var(--ink)","stroke-width":.7},svg);el("title",{},c).textContent=`${A.n} (base)`;label(A,[A.L,A.a,A.b])}
+ ms.forEach(p=>{const c=el("circle",{cx:p.a,cy:-p.b,r:3.6,fill:p.rgb,stroke:"var(--ink)","stroke-width":.6,style:"cursor:pointer"},svg);el("title",{},c).textContent=p.n+(p.gran==="G"?" (granulating)":"");
+  if(!tri){c.addEventListener("pointerenter",()=>hilite(p.n));c.addEventListener("pointerleave",()=>hilite(null))}});
+ ms.forEach(p=>label(p,[p.L,p.a,p.b]));
  const cap=document.createElement("figcaption");cap.className="fine";
- cap.innerHTML=paths.length?`Each dot is one step of a mix, starting from 100% ${A.n}; hover a strip or path to focus on it, or a dot for its ratio. Dashed lines are straight paths, for comparison: real mixes curve away from them.`:A?`Pick up to three paints to draw their mixing paths from ${A.n}.`:"Pick a base paint and up to three paints to mix with it.";
+ cap.innerHTML=tri?`Each dot is a mix of the three paints in 7% steps, from the pure paints at the corners to equal parts in the middle; hover a dot for its recipe. The spread shows every color the three can make together.`:ms.length>1?`Each dot is one step of a two-paint mix. Hover a paint to focus on its mixes, or a path or dot to see a ratio.`:ms.length?`Pick another paint to draw its mixing path from ${ms[0].n}.`:`Pick paints from your palette to draw their mixing paths here.`;
  fig.appendChild(cap);return fig}
-document.getElementById("mixClear").onclick=()=>{st.mix=[];st.mixBase=null;save();renderMix()};
+document.getElementById("mixClear").onclick=()=>{st.mix=[];save();renderMix()};
+document.getElementById("mix3").addEventListener("change",e=>{st.mix3=e.target.checked;save();renderMix()});
 
 const _render=render;render=function(){_render();renderMix()};
 buildChips();render();

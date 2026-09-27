@@ -151,7 +151,8 @@ input[type=search]{width:100%;font:inherit;font-size:15px;padding:7px 12px;borde
 <label><input type="checkbox" id="showLab" checked> Names</label>
 <label><input type="checkbox" id="showBase" checked> Starting outline</label>
 <button id="setBase">Make this the starting outline</button>
-<button id="reset">Clear palette</button>
+<button id="reset">Reset to starting outline</button>
+<button id="clearPal">Clear palette</button>
 </div>
 <div id="info" class="info-anchor">Hover or tap a dot for its numbers. Tap to add it to your palette.</div>
 </section>
@@ -1374,7 +1375,8 @@ function search(){const v=q.value.trim().toLowerCase();res.innerHTML="";if(!v)re
 q.addEventListener("input",search);
 ["showMine","showAll","showLab","showBase"].forEach(id=>document.getElementById(id).addEventListener("change",render));
 document.getElementById("setBase").onclick=()=>{st.base=[...st.sel];save();render()};
-document.getElementById("reset").onclick=()=>{st.sel=[...MINE];save();render()};
+document.getElementById("reset").onclick=()=>{st.sel=[...st.base];save();render()};
+document.getElementById("clearPal").onclick=()=>{st.sel=[];save();render()};
 // ---- mixing ----
 const MAXMIX=99,STEPS=41;
 const toLin=v=>{v/=255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4},toS=v=>{v=v<=0.0031308?12.92*v:1.055*v**(1/2.4)-0.055;return Math.round(Math.max(0,Math.min(1,v))*255)};

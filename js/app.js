@@ -79,7 +79,7 @@ const unitsPerPx=svg=>248/svg.getBoundingClientRect().width;
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
 const lfTxt=p=>p.lfRaw?`Lightfastness ${p.lfRaw}${p.lfRaw.startsWith("ASTM")||ROMAN[p.lfRaw]?"":` (≈ ${ROMAN[p.lf]})`}`:"Lightfastness not listed";
 const propsOf=p=>[p.single===true?"Single pigment":p.single===false?"Mixture":null,lfTxt(p),p.trans?TNAME[p.trans]:null,p.stain?SNAME[p.stain]:null,p.gran?(p.gran==="G"?"Granulating":"Non-granulating"):null,p.series?"Series "+p.series:null,p.disc?"Discontinued":null].filter(Boolean).join(" · ");
-const makerTxt=p=>[p.bs,p.code,p.pig&&p.pig.join(", ")].filter(Boolean).join(" · ");
+const makerTxt=p=>[p.bs,p.pig&&p.pig.join(", ")].filter(Boolean).join(" · ");
 const numsOf=p=>`Hue ${p.h.toFixed(1)}°, chroma ${p.C.toFixed(1)}, lightness ${p.L}`;
 const srcNote=p=>p.src==="maker"?"Color from the manufacturer's published values, not yet measured.":p.src==="chart"?"Color measured from a printed color chart.":"";
 const EXT='<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>';
@@ -256,7 +256,8 @@ function renderMix(){
  if(!st.sel.length)box.innerHTML='<li class="fine">Your palette is empty. Add paints in Pigments first.</li>';
  st.sel.map(id=>byId[id]).sort(hueSort).forEach(p=>{const on=st.mix.includes(p.id),li=document.createElement("li"),b=document.createElement("button");
   b.className="pchip";b.setAttribute("aria-pressed",on);b.disabled=full&&!on;
-  b.innerHTML=`<span class="sw" style="background:${p.rgb}"></span><span>${esc(p.n)}<br><span class="gr">${esc(p.bs)}${p.gran==="G"?" · Granulating":""}</span></span>`;
+  b.setAttribute("aria-label",`${p.n}, ${p.bs}${p.gran==="G"?", granulating":""}`);b.title=p.n;
+  b.innerHTML=`<span class="sw" style="background:${p.rgb}"><svg class="ck" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span><span class="pt" aria-hidden="true"><span class="pn">${esc(p.n)}</span><span class="gr">${esc(p.bs)}${p.gran==="G"?" · Gran.":""}</span></span>`;
   b.onclick=()=>{if(on)st.mix=st.mix.filter(m=>m!==p.id);else st.mix.push(p.id);save();renderMix()};li.appendChild(b);box.appendChild(li)});
  if(st.mix3||!st.mix.includes(mixFocus))mixFocus=null;
  const ms=st.mix.map(id=>byId[id]).sort(hueSort),bars=$("bars");bars.innerHTML="";
@@ -397,8 +398,16 @@ setTab(location.hash.slice(1));
 // theme: Auto follows the device; Light or Dark is remembered in this browser
 function setTheme(t){const r=document.documentElement;if(t==="auto")delete r.dataset.theme;else r.dataset.theme=t;try{localStorage.setItem("wpb:theme",t);localStorage.removeItem("dswheel:theme")}catch(e){}
  const bg=getComputedStyle(r).getPropertyValue("--paper").trim();document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.setAttribute("content",t==="auto"?(m.media.includes("dark")?"#151618":"#F3F1EC"):bg));
- document.querySelectorAll(".theme button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t))}
+ document.querySelectorAll(".theme button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));
+ // phones get one small button that steps Auto → Light → Dark
+ const nx=THEMES[(THEMES.indexOf(t)+1)%3],tb=$("themeBtn");tb.dataset.t=t;tb.querySelector("svg").innerHTML=THEME_ICON[t];
+ tb.setAttribute("aria-label",`Color theme: ${TNAMES[t]}. Switch to ${TNAMES[nx]}`);tb.title=`Theme: ${TNAMES[t]}`}
+const THEMES=["auto","light","dark"],TNAMES={auto:"Auto",light:"Light",dark:"Dark"};
+const THEME_ICON={auto:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor"/>',
+ light:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+ dark:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>'};
 document.querySelectorAll(".theme button").forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
+$("themeBtn").onclick=()=>{const t=$("themeBtn").dataset.t||"auto";setTheme(THEMES[(THEMES.indexOf(t)+1)%3])};
 setTheme(document.documentElement.dataset.theme||"auto");
 
 const _render=render;render=function(){_render();renderMix()};

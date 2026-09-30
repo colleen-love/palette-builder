@@ -6,140 +6,202 @@
 <title>Daniel Smith pigment wheel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
 <style>
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
---paper:#F5F6F4;--ink:#25272A;--graphite:#686C72;--rule:#D8DBD6;--wash:#25272A;--washop:.075;--panel:#ECEEEA;--hover:#E2E5E0;}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#1B1C1E;--ink:#E7E7E3;--graphite:#9A9EA4;--rule:#35373A;--wash:#E7E7E3;--washop:.09;--panel:#232427;--hover:#2D2F32;}}
-:root[data-theme="dark"]{--paper:#1B1C1E;--ink:#E7E7E3;--graphite:#9A9EA4;--rule:#35373A;--wash:#E7E7E3;--washop:.09;--panel:#232427;--hover:#2D2F32;}
+:root{box-sizing:border-box;
+--paper:#F3F1EC;--card:#FFFFFF;--ink:#23252A;--graphite:#6A6E75;--rule:#E4E1DA;--wash:#23252A;--washop:.075;--panel:#F6F4F0;--hover:#EEEBE4;
+--shadow:0 1px 2px rgba(40,32,20,.04),0 6px 24px rgba(40,32,20,.06);--sheetshadow:0 -6px 32px rgba(30,24,16,.16);
+--serif:"Literata",Georgia,"Times New Roman",serif;--sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#151618;--card:#1E1F22;--ink:#E9E8E4;--graphite:#9EA2A8;--rule:#313337;--wash:#E9E8E4;--washop:.09;--panel:#25272A;--hover:#2A2C30;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);--sheetshadow:0 -6px 32px rgba(0,0,0,.5)}}
+:root[data-theme="dark"]{--paper:#151618;--card:#1E1F22;--ink:#E9E8E4;--graphite:#9EA2A8;--rule:#313337;--wash:#E9E8E4;--washop:.09;--panel:#25272A;--hover:#2A2C30;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);--sheetshadow:0 -6px 32px rgba(0,0,0,.5)}
 *,*::before,*::after{box-sizing:inherit}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:"Literata",Georgia,"Times New Roman",serif;font-size:16px;line-height:1.55}
-h1{font-weight:500;font-size:30px;line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
-header p{margin:0;color:var(--graphite);max-width:68ch;font-size:15px}
-svg#wheel{width:100%;height:auto;display:block;max-height:86vh;touch-action:manipulation}
-.controls{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin-top:6px;font-size:14px;color:var(--graphite)}
-.controls label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
-button{font:inherit;font-size:14px;color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:999px;padding:4px 12px;cursor:pointer}
-button:hover{background:var(--hover)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-tap-highlight-color:transparent;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+h1,h2,h3{font-family:var(--serif);font-weight:500;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.2vw,40px);line-height:1.1;margin:0 0 10px}
+h2{font-size:19px;margin:0 0 10px}
+a{color:inherit}
 :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-#info{min-height:4.6em;margin-top:10px;font-size:14px;color:var(--graphite)}
+button{font:inherit;font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:999px;padding:6px 14px;min-height:36px;cursor:pointer;transition:background .12s,border-color .12s}
+@media (hover:hover){button:hover{background:var(--hover)}}
+button:disabled{opacity:.45;cursor:default;background:none}
+button.primary{background:var(--ink);color:var(--card);border-color:var(--ink);font-weight:500;width:100%;min-height:44px;border-radius:12px}
+@media (hover:hover){button.primary:hover{background:var(--ink);opacity:.9}}
+button.primary.rm{background:none;color:var(--ink);border-color:var(--rule)}
+.page{max-width:1280px;margin:0 auto;padding:0 24px 40px;display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:24px;row-gap:24px;align-items:start}
+.page>header{grid-column:1/-1;padding:36px 0 4px;max-width:78ch}
+.eyebrow{margin:0 0 8px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--graphite);font-weight:500}
+.lede{margin:0;color:var(--graphite);font-size:15.5px;max-width:68ch}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:20px;padding:22px;box-shadow:var(--shadow);min-width:0}
+.r2l{grid-column:1}.r2r{grid-column:2}.r3l{grid-column:1}.r3r{grid-column:2}.r4,.r5{grid-column:1/-1}
+.r2r,.r3r{display:flex;flex-direction:column;gap:24px;min-width:0}
+.fine{font-size:13px;color:var(--graphite);line-height:1.55}
+.muted{color:var(--graphite)}
+/* wheel */
+.wheelcard{padding:18px 18px 16px}
+svg#wheel{width:100%;height:auto;display:block;max-height:82vh;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#wheel circle:focus{outline:none}
+#wheel circle:focus-visible{stroke:var(--ink);stroke-width:.9}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
+.tog{position:relative;display:inline-flex;align-items:center;gap:7px;font-size:13.5px;color:var(--graphite);border:1px solid var(--rule);border-radius:999px;padding:6px 13px 6px 10px;min-height:36px;cursor:pointer;user-select:none}
+.tog input{position:absolute;opacity:0;pointer-events:none}
+.tog::before{content:"";width:9px;height:9px;border-radius:50%;border:1.5px solid var(--graphite)}
+.tog:has(input:checked){color:var(--ink);background:var(--panel)}
+.tog:has(input:checked)::before{background:var(--ink);border-color:var(--ink)}
+.tog:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+#info{min-height:4.8em;margin-top:14px;padding:12px 14px;background:var(--panel);border-radius:12px;font-size:13.5px;color:var(--graphite)}
 #info b{color:var(--ink);font-weight:600}
-aside{display:flex;flex-direction:column;gap:26px}
-aside h2{font-size:18px;font-weight:600;margin:0 0 8px}
-.stat{font-size:15px;margin:0 0 2px}
-.stat .big{font-size:26px;font-weight:500;font-variant-numeric:tabular-nums}
-.delta{font-size:14px;color:var(--graphite);margin:0}
-.filters{background:var(--panel);border-radius:12px;padding:14px 14px 12px}
-.fhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+/* reach */
+.meter{margin:0 0 14px}
+.meter .ml{display:flex;align-items:baseline;gap:10px;font-size:13.5px;color:var(--graphite);margin-bottom:6px}
+.big{font-family:var(--serif);font-size:32px;line-height:1;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums;min-width:2.6ch}
+.track{height:8px;border-radius:99px;background:var(--panel);border:1px solid var(--rule);overflow:hidden}
+.fillbar{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#d9534f,#e8a33d,#e6d24a,#6fb46a,#3f8fc4,#8a5fb8);transition:width .35s ease}
+@media (prefers-reduced-motion:reduce){.fillbar{transition:none}}
+.delta{font-size:13.5px;color:var(--graphite);margin:4px 0 0}
+.delta:empty{display:none}
+/* filters */
+.fhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px}
 .fhead h2{margin:0}
-.link{border:none;padding:0;background:none;color:var(--graphite);text-decoration:underline;font-size:13.5px}
-.link:hover{background:none;color:var(--ink)}
-.fgroup{display:grid;grid-template-columns:96px 1fr;gap:6px 10px;align-items:start;padding:7px 0;border-top:1px solid var(--rule)}
+.link{border:none;padding:0;min-height:0;background:none;color:var(--graphite);text-decoration:underline;text-underline-offset:2px;font-size:13.5px}
+@media (hover:hover){.link:hover{background:none;color:var(--ink)}}
+.fgroup{display:grid;grid-template-columns:100px 1fr;gap:6px 10px;align-items:start;padding:10px 0;border-top:1px solid var(--rule)}
 .fgroup:first-of-type{border-top:none}
-.flabel{font-size:13.5px;color:var(--graphite);padding-top:3px}
-.chips{display:flex;flex-wrap:wrap;gap:5px}
-.chip{font-size:13px;padding:2px 10px;background:var(--paper)}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.fcount{font-size:13.5px;color:var(--graphite);margin:8px 0 0}
-.fopt{display:flex;gap:6px;align-items:center;font-size:13.5px;color:var(--graphite);margin-top:6px;cursor:pointer}
-ul{list-style:none;margin:0;padding:0}
-.row{display:flex;align-items:center;gap:10px;padding:5px 6px;border-radius:6px}
-.row:hover{background:var(--hover)}
-.sw{width:18px;height:18px;border-radius:50%;flex:none;border:1px solid rgba(128,128,128,.35)}
-.nm{flex:1;min-width:0;font-size:15px}
-.note{font-size:12.5px;color:var(--graphite)}
-.x{border:none;padding:2px 8px;font-size:15px;color:var(--graphite)}
-.gain{font-size:14px;font-variant-numeric:tabular-nums;color:var(--graphite);min-width:3.5em;text-align:right}
-input[type=search]{width:100%;font:inherit;font-size:15px;padding:7px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink)}
-#results{max-height:260px;overflow-y:auto;margin-top:6px}
-.fine{font-size:13px;color:var(--graphite);line-height:1.5}
-.fine a{color:inherit}
-.count{font-weight:400;color:var(--graphite);font-size:16px}
-.mixing{max-width:1240px;margin:0 auto;padding:8px 24px 48px}
-.mixing>.mhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;border-top:1px solid var(--rule);padding-top:24px;margin-bottom:14px}
-.mixing h2{font-size:24px;font-weight:500;margin:0}
-.water{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--graphite)}
-.water input{width:220px;accent-color:var(--ink)}
-.water output{min-width:3.2em;font-variant-numeric:tabular-nums;color:var(--ink)}
-.mgrid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:32px;align-items:start}
-@media (max-width:900px){.mgrid{grid-template-columns:1fr}}
-.mpick .row{cursor:pointer}
-.mpick input{accent-color:var(--ink);margin:0}
-.mpick .row.dis{opacity:.45;cursor:default}
-.mctl{display:flex;align-items:center;gap:6px 16px;flex-wrap:wrap;margin:2px 0 8px}
-.mctl .mclear{margin:0}.mctl .fopt{margin:0}
-.mrow{display:grid;grid-template-columns:28px 28px 18px 1fr;align-items:center;gap:0 8px}
-.mrow input{justify-self:center}
-.mhead-row{display:grid;grid-template-columns:28px 28px 18px 1fr;gap:0 8px;font-size:12px;color:var(--graphite);padding:0 6px 2px;text-align:center}
-.mrow.picked{background:var(--hover)}
-.mpick input{accent-color:var(--ink);margin:0}
-.bar{margin:0 0 18px}
-.bar .bl{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-bottom:5px}
-.bar .bl .g{color:var(--graphite);font-size:13px;white-space:nowrap}
-.strip{position:relative;height:44px;border-radius:6px;overflow:hidden;border:1px solid rgba(128,128,128,.25);background-origin:border-box;background-repeat:no-repeat}
-.strip .tex{position:absolute;inset:0;mix-blend-mode:multiply;opacity:.35;background-size:120px 120px}
-.empty{color:var(--graphite);font-size:15px;padding:18px;border:1px dashed var(--rule);border-radius:10px}
-.below{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:32px;margin-top:22px;align-items:start}
-.below h2{font-size:18px;font-weight:600;margin:0 0 8px}
-@media (max-width:640px){.below{grid-template-columns:1fr}}
-.notes{max-width:1240px;margin:0 auto;padding:0 24px 40px}
-.notes p{max-width:90ch;margin:0}
-.page{max-width:1280px;margin:0 auto;padding:0 24px 40px;display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:40px;row-gap:36px;align-items:start}
-.page>header{grid-column:1/-1;text-align:center;padding:28px 0 0;max-width:none}
-.page>header p{margin:0 auto}
-.r2l{grid-column:1}.r2r{grid-column:2}.r3l{grid-column:1}.r3r{grid-column:2}
-.r4{grid-column:1/-1;display:grid;grid-template-columns:300px minmax(0,1fr);column-gap:40px;align-items:start}
-.r4l{grid-column:1}.r4r{grid-column:2}.r5{grid-column:1/-1}
-.r2r,.r3r{display:flex;flex-direction:column;gap:26px}
-.r2r h2,.r3r h2,.r3l h2,.r4l h2{font-size:18px;font-weight:600;margin:0 0 8px}
-.r3l,.r4l,.r4r{border-top:1px solid var(--rule);padding-top:22px}
-.r3r{border-top:1px solid var(--rule);padding-top:22px}
-#pal{columns:2 260px;column-gap:28px}
-#pal .row,#mixPal .row{break-inside:avoid}
-.mixh{font-size:24px!important;font-weight:500!important}
-.mtop{display:flex;justify-content:flex-end;margin-bottom:14px}
-/* mixing row: narrow picker, wide strips */
-@media (min-width:901px){.page{grid-template-areas:none}
- .r4l{grid-column:1;max-width:none}
-}
-@media (max-width:900px){.r4{grid-template-columns:1fr;row-gap:24px}.page{grid-template-columns:1fr}.r2l,.r2r,.r3l,.r3r,.r4l,.r4r,.r5{grid-column:1}}
-.ext{display:inline-flex;vertical-align:-1px;color:var(--graphite);padding:2px;border-radius:4px}
-.ext:hover{color:var(--ink);background:var(--hover)}
-.lrange{display:flex;flex-direction:column;gap:4px;padding-top:2px}
-.lslide{position:relative;height:22px}
-.ltrack{position:absolute;left:0;right:0;top:8px;height:6px;border-radius:3px;background:linear-gradient(to right,#1e1e1e,#fafafa);border:1px solid var(--rule)}
-.lfill{position:absolute;top:6px;height:10px;border:2px solid var(--ink);border-radius:5px;pointer-events:none}
-.lslide input{position:absolute;left:0;top:0;width:100%;height:22px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none;z-index:3}
-.lslide input::-webkit-slider-runnable-track{background:none;height:22px}
+.flabel{font-size:13px;color:var(--graphite);padding-top:5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:13px;padding:4px 11px;min-height:32px;background:var(--panel);border-color:transparent}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.fcount{font-size:13px;color:var(--graphite);margin:10px 0 0}
+.lrange{display:flex;flex-direction:column;gap:4px;padding-top:4px}
+.lslide{position:relative;height:28px}
+.ltrack{position:absolute;left:0;right:0;top:11px;height:6px;border-radius:3px;background:linear-gradient(to right,#1e1e1e,#fafafa);border:1px solid var(--rule)}
+.lfill{position:absolute;top:9px;height:10px;border:2px solid var(--ink);border-radius:5px;pointer-events:none}
+.lslide input{position:absolute;left:0;top:0;width:100%;height:28px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none;z-index:3}
+.lslide input::-webkit-slider-runnable-track{background:none;height:28px}
 .lslide input::-moz-range-track{background:none}
-.lslide input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:16px;height:16px;margin-top:3px;border-radius:50%;background:var(--paper);border:2px solid var(--ink);cursor:pointer}
-.lslide input::-moz-range-thumb{pointer-events:auto;width:12px;height:12px;border-radius:50%;background:var(--paper);border:2px solid var(--ink);cursor:pointer}
+.lslide input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:22px;height:22px;margin-top:3px;border-radius:50%;background:var(--card);border:2px solid var(--ink);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.lslide input::-moz-range-thumb{pointer-events:auto;width:18px;height:18px;border-radius:50%;background:var(--card);border:2px solid var(--ink);cursor:pointer}
 .lslide input:focus-visible::-webkit-slider-thumb{outline:2px solid var(--ink);outline-offset:2px}
 .lvals{display:flex;justify-content:space-between;font-size:13px;color:var(--graphite);font-variant-numeric:tabular-nums}
-.wnote{margin:2px 0 0;font-size:12.5px;color:var(--graphite);text-align:right}
-.mclear{font-size:13px;padding:2px 10px;margin:2px 0 8px}
-.mclear:disabled{opacity:.45;cursor:default;background:none}
-.mchart{margin:14px 0 0;max-width:560px}
-.mchart svg{width:100%;height:auto;display:block}
-.mchart figcaption{margin-top:4px}
-.strip.pending{border-style:dashed;border-color:var(--rule)}
-.bl .muted{color:var(--graphite)}
-.palhead{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 18px;margin:0 0 8px}
-.palhead h2{margin:0!important}
+/* lists */
+ul{list-style:none;margin:0;padding:0}
+.row{display:flex;align-items:center;gap:12px;padding:7px 8px;border-radius:10px;min-height:44px}
+@media (hover:hover){.row:hover{background:var(--hover)}}
+.sw{width:26px;height:26px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(128,128,128,.3)}
+.nm{flex:1;min-width:0;font-size:14.5px;line-height:1.35}
+.note{font-size:12.5px;color:var(--graphite)}
+.x{border:none;background:none;padding:0;width:36px;height:36px;min-height:36px;font-size:18px;line-height:1;color:var(--graphite);flex:none}
+@media (hover:hover){.x:hover{background:var(--hover);color:var(--ink)}}
+.gain{font-size:13.5px;font-variant-numeric:tabular-nums;color:var(--graphite);min-width:3.5em;text-align:right}
+input[type=search]{width:100%;font:inherit;font-size:16px;padding:10px 14px;border:1px solid var(--rule);border-radius:12px;background:var(--panel);color:var(--ink);-webkit-appearance:none;appearance:none}
+#results{max-height:300px;overflow-y:auto;margin-top:6px}
+.count{font-family:var(--sans);font-weight:400;color:var(--graphite);font-size:15px}
+#pal{columns:2 260px;column-gap:20px}
+#pal .row{break-inside:avoid}
+.palhead{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px 18px;margin:0 0 10px}
+.palhead h2{margin:0}
 .palbtns{display:flex;flex-wrap:wrap;gap:6px}
-.palbtns button{font-size:13px;padding:3px 11px}
-#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--paper);font-size:13px;padding:5px 9px;border-radius:6px;opacity:0;transition:opacity .1s;white-space:nowrap;z-index:5}
-@media (prefers-reduced-motion:reduce){#tip{transition:none}}
+.palbtns button{font-size:13px;padding:4px 12px;min-height:34px}
+.ext{display:inline-flex;vertical-align:-1px;color:var(--graphite);padding:2px;border-radius:4px}
+@media (hover:hover){.ext:hover{color:var(--ink);background:var(--hover)}}
+/* mixing */
+.mhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;margin-bottom:6px}
+.mhead h2{font-size:26px;margin:0}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--rule);border-radius:999px;padding:3px}
+.seg button{border:none;background:none;min-height:32px;padding:4px 14px;font-size:13.5px;color:var(--graphite)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.mgrid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;align-items:start;margin-top:16px}
+.mpickhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.pchips{display:flex;flex-wrap:wrap;gap:6px}
+.pchip{display:inline-flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;min-height:38px;font-size:13.5px;text-align:left;background:var(--panel);border-color:transparent;max-width:100%}
+.pchip .sw{width:28px;height:28px}
+.pchip[aria-pressed="true"]{background:var(--card);border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.pchip .gr{font-size:11px;color:var(--graphite)}
+.mchart{margin:0;position:relative}
+.mchart svg{width:100%;max-width:560px;height:auto;display:block;margin:0 auto;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.mchart figcaption{margin-top:6px;text-align:center}
+.mchart .mpath{transition:opacity .15s}
+.pairs{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px 20px}
+.pairs>.fine{grid-column:1/-1;margin:0}
+.pair .bl{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin-bottom:5px}
+.pair .bl span:last-child{text-align:right}
+.strip{position:relative;height:44px;border-radius:10px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(128,128,128,.25);cursor:pointer;touch-action:manipulation}
+.strip .tex{position:absolute;inset:0;mix-blend-mode:multiply;opacity:.35;background-size:120px 120px;pointer-events:none}
+.strip .tick{position:absolute;top:-2px;bottom:-2px;width:4px;margin-left:-2px;border-radius:2px;background:var(--card);box-shadow:0 0 0 1.5px var(--ink);pointer-events:none}
+.empty{color:var(--graphite);font-size:14px;padding:18px;border:1px dashed var(--rule);border-radius:12px}
+.notes{max-width:90ch}
+.r5 p{margin:0 0 10px;max-width:100ch}
+/* tooltip */
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--card);font-size:12.5px;line-height:1.4;padding:6px 10px;border-radius:8px;opacity:0;transition:opacity .1s;white-space:pre;z-index:15}
+/* sheet: bottom sheet on phones, floating card on wider screens */
+.sheet{position:fixed;z-index:20;left:0;right:0;bottom:0;max-height:78vh;overflow-y:auto;overscroll-behavior:contain;background:var(--card);color:var(--ink);border-radius:22px 22px 0 0;box-shadow:var(--sheetshadow);padding:8px 18px calc(18px + env(safe-area-inset-bottom,0px));animation:sheetIn .2s ease-out}
+.sheet[hidden]{display:none}
+.sheet::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--rule);margin:0 auto 10px}
+@keyframes sheetIn{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+@media (min-width:760px){.sheet{left:auto;right:24px;bottom:24px;width:390px;border-radius:20px;border:1px solid var(--rule);padding:18px 20px 20px}.sheet::before{display:none}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}#tip{transition:none}.fillbar{transition:none}}
+.sh-head{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.sh-sw{width:64px;height:64px;border-radius:16px;flex:none;box-shadow:inset 0 0 0 1px rgba(128,128,128,.3);position:relative;overflow:hidden}
+.sh-sw.mix{width:88px;height:88px;border-radius:50% 46% 52% 44%/48% 52% 46% 54%}
+.sh-sw .tex{position:absolute;inset:0;mix-blend-mode:multiply;opacity:.35;background-size:120px 120px}
+.sh-t{flex:1;min-width:0}
+.sh-t h3{font-size:19px;line-height:1.25;margin:0 0 3px}
+.sh-t p{margin:0}
+.sh-close{align-self:flex-start;margin:-4px -8px 0 0}
+.sh-props{font-size:13.5px;color:var(--graphite);margin:0 0 12px}
+.sh-warn{font-size:13px;margin:-4px 0 12px;padding:8px 10px;border-radius:10px;background:var(--panel)}
+.sh-near{margin-top:14px}
+.sh-near .flabel{display:block;padding:0 0 6px}
+.sh-near .chip{display:inline-flex;align-items:center;gap:6px;padding-left:4px}
+.sh-near .chip .sw{width:22px;height:22px}
+.ratio{display:flex;height:14px;border-radius:99px;overflow:hidden;margin:2px 0 14px;box-shadow:inset 0 0 0 1px rgba(128,128,128,.25)}
+.ratio span{display:block;height:100%;transition:width .12s}
+.parts{font-variant-numeric:tabular-nums}
+.rec{display:grid;grid-template-columns:26px minmax(0,1fr) 3.2em;gap:6px 10px;align-items:center;margin:0 0 12px}
+.two{display:flex;align-items:center;gap:10px;margin:-2px 0 12px}
+.two .sw{width:22px;height:22px}
+.two input{flex:1;min-width:0;margin:0;accent-color:var(--ink);height:32px}
+.rec .sw{width:26px;height:26px}
+.rec .nm{font-size:14px}
+.rec .pc{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:14px}
+.rec input[type=range]{grid-column:2/4;width:100%;margin:0 0 6px;accent-color:var(--ink);height:28px}
+/* responsive */
+@media (max-width:980px){.page{grid-template-columns:1fr}.r2l,.r2r,.r3l,.r3r,.r4,.r5{grid-column:1}.mgrid{grid-template-columns:1fr;gap:18px}}
+@media (max-width:600px){
+ .page{padding:0 12px 32px;row-gap:14px}
+ .page>header{padding:22px 4px 2px}
+ .lede{font-size:14.5px}
+ .card{padding:16px;border-radius:18px}
+ .wheelcard{padding:6px 4px 14px}
+ .wheelcard .controls,.wheelcard #info{margin-left:10px;margin-right:10px}
+ .r2r,.r3r{gap:14px}
+ .fgroup{grid-template-columns:1fr;gap:6px}
+ .flabel{padding-top:0}
+ .mhead h2{font-size:23px}
+ .pairs{grid-template-columns:1fr}
+ #pal{columns:1}
+ .sheet{max-height:62vh;padding:6px 16px calc(14px + env(safe-area-inset-bottom,0px))}
+ .sh-head{gap:12px;margin-bottom:10px}
+ .sh-sw{width:52px;height:52px;border-radius:14px}
+ .sh-sw.mix{width:60px;height:60px}
+ .sh-t h3{font-size:17px}
+ .sh-props{font-size:13px;margin-bottom:10px}
+ .sh-near{margin-top:10px}
+ .sh-near .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+ .sh-near .chip{flex:none}
+ .ratio{height:10px;margin-bottom:10px}
+ .rec{gap:4px 10px;margin-bottom:8px}
+}
 </style>
 </head>
 <body>
 <div class="page">
 <header>
+<p class="eyebrow">Watercolor palette builder</p>
 <h1>Daniel Smith pigment wheel</h1>
-<p>Every Daniel Smith Extra Fine watercolor placed by hue angle and chroma, from measured masstone colors (artistpigments.org). Tap dots to build a palette; the wash shows the range of colors it can reach. Your palette and filters are saved in this browser.</p>
+<p class="lede">Every Daniel Smith Extra Fine watercolor placed by hue angle and chroma, from measured masstone colors (artistpigments.org). Build a palette on the wheel; the wash shows the range of colors it can reach. Your palette and filters are saved in this browser.</p>
 </header>
-<section class="r2l">
+<section class="card r2l wheelcard" aria-label="Pigment wheel">
 <svg id="wheel" viewBox="-124 -124 248 248" role="img" aria-label="Hue and chroma wheel of Daniel Smith watercolors">
 <defs>
 <filter id="wet" x="-20%" y="-20%" width="140%" height="140%">
@@ -147,25 +209,25 @@ input[type=search]{width:100%;font:inherit;font-size:15px;padding:7px 12px;borde
 <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
 </filter>
 </defs>
-<g id="grid"></g><g id="ring"></g><g id="washg"></g><g id="baseg"></g><g id="allg"></g><g id="labg"></g>
+<g id="grid"></g><g id="ring"></g><g id="washg"></g><g id="baseg"></g><g id="allg"></g><g id="labg"></g><g id="focusg" pointer-events="none"></g>
 </svg>
-<div class="controls">
-<label><input type="checkbox" id="showMine" checked> My palette</label>
-<label><input type="checkbox" id="showAll" checked> Other paints</label>
-<label><input type="checkbox" id="showLab" checked> Names</label>
-<label><input type="checkbox" id="showBase" checked> Stored palette outline</label>
+<div class="controls" role="group" aria-label="Show on the wheel">
+<label class="tog"><input type="checkbox" id="showMine" checked><span>My palette</span></label>
+<label class="tog"><input type="checkbox" id="showAll" checked><span>Other paints</span></label>
+<label class="tog"><input type="checkbox" id="showLab" checked><span>Names</span></label>
+<label class="tog"><input type="checkbox" id="showBase" checked><span>Stored palette outline</span></label>
 </div>
-<div id="info" class="info-anchor">Hover or tap a dot for its numbers. Tap to add it to your palette.</div>
+<div id="info" aria-live="polite">Hover a dot for its numbers. Click to add it to your palette.</div>
 </section>
 <aside class="r2r">
-<div>
+<div class="card">
 <h2>Reach</h2>
-<p class="stat"><span class="big" id="pct"></span> of the full Daniel Smith range</p>
-<p class="stat" style="margin-top:8px"><span class="big" id="fpct"></span> of the range that meets your filters</p>
+<div class="meter"><div class="ml"><span class="big" id="pct"></span><span>of the full Daniel Smith range</span></div><div class="track"><div class="fillbar" id="pctBar"></div></div></div>
+<div class="meter"><div class="ml"><span class="big" id="fpct"></span><span>of the range that meets your filters</span></div><div class="track"><div class="fillbar" id="fpctBar"></div></div></div>
 <p class="delta" id="fnote"></p>
-<p class="delta" id="delta" style="margin-top:6px"></p>
+<p class="delta" id="delta"></p>
 </div>
-<div class="filters" id="filters">
+<div class="card filters" id="filters">
 <div class="fhead"><h2>Filters</h2><button class="link" id="clearF">Clear all</button></div>
 <div class="fgroup"><span class="flabel">Lightfastness</span><div class="chips" data-key="lf" data-mode="many"></div></div>
 <div class="fgroup"><span class="flabel">Pigments</span><div class="chips" data-key="pig" data-mode="one"></div></div>
@@ -180,38 +242,38 @@ input[type=search]{width:100%;font:inherit;font-size:15px;padding:7px 12px;borde
 <div class="lvals"><span id="lval">Any</span><button class="link" id="lreset" hidden>Reset</button></div></div></div>
 <p class="fcount" id="fcount"></p>
 </div>
-<p class="fine">Color data: masstone measurements from <a href="https://artistpigments.org/brands/daniel-smith-extra-fine-watercolors">artistpigments.org</a> (CC BY-NC 4.0), handmade samples measured with a Nix Spectro 2. Earthy Light Red and Coral Reef aren't measured there yet, so they use Daniel Smith's <a href="https://danielsmith.com/daniel-smith-watercolors-cie-lab-coordinates/">published CIE Lab values</a>. Lightfastness, staining, granulation, transparency and price series: Daniel Smith's <a href="https://danielsmith.com/wp-content/uploads/2021/05/DS-Watercolor-pigment-characteristics.pdf">2021 pigment characteristics sheet</a>, plus retailer listings for King's Royal Blue and McCracken Black. Paints added after 2021 (the 2025 releases, both Jane's Blacks, Chrome Titanate Yellow) use Daniel Smith's own color-story pages. Single pigment means one Colour Index pigment on the label; PrimaTek minerals count as single. Reach is the area your palette covers in the a*b* plane, traced along the simulated mixing curve between every pair of your paints (Mixbox) rather than straight lines, so it bows inward between distant hues and outward between neighbors. It's a simulation from each paint's measured color, so treat it as a guide, not a measurement. The wheel doesn't show lightness; use the Lightness filter (0 is black, 100 is white) to narrow by it.</p>
 </aside>
-<section class="r3l">
-<div class="palhead"><h2>Your palette <span class="count" id="palCount"></span></h2><div class="palbtns"><button id="clearPal">Clear palette</button><button id="setBase">Store palette</button><button id="reset">Reset to stored palette</button></div></div>
+<section class="card r3l">
+<div class="palhead"><h2>Your palette <span class="count" id="palCount"></span></h2><div class="palbtns"><button id="clearPal">Clear</button><button id="setBase">Store palette</button><button id="reset">Reset to stored</button></div></div>
 <ul id="pal"></ul>
 </section>
 <aside class="r3r">
-<div>
+<div class="card">
 <h2>Biggest gains</h2>
 <p class="fine" style="margin:0 0 6px">Paints that meet your filters and would push your edge out furthest.</p>
 <ul id="gains"></ul>
 </div>
-<div>
+<div class="card">
 <h2>Add any paint</h2>
 <input type="search" id="q" placeholder="Search paints" aria-label="Search paints">
 <ul id="results"></ul>
 </div>
 </aside>
-<div class="r4">
-<section class="r4l mpick" aria-labelledby="mixh">
-<h2 id="mixh" class="mixh">Mixing</h2>
-<p class="fine" style="margin:0 0 6px">Pick paints from your palette to see the mixing path between every pair. Turn on three-paint mixes to see everything three paints can make together.</p>
-<div class="mctl"><button id="mixClear" class="mclear">Clear selection</button><label class="fopt"><input type="checkbox" id="mix3"> Three-paint mixes</label></div>
-<ul id="mixPal"></ul>
-</section>
-<section class="r4r" aria-label="Simulated mixes">
+<section class="card r4" aria-labelledby="mixh">
+<div class="mhead"><h2 id="mixh">Mixing</h2><div class="seg" role="group" aria-label="Paints per mix"><button id="mix2btn" aria-pressed="true">Two paints</button><button id="mix3btn" aria-pressed="false">Three paints</button></div></div>
+<p class="fine" id="mixHelp" style="margin:0;max-width:75ch"></p>
+<div class="mgrid">
+<div class="mpick"><div class="mpickhead"><span class="flabel" style="padding:0">From your palette</span><button id="mixClear" class="link">Clear selection</button></div><ul id="mixPal" class="pchips"></ul></div>
 <div id="bars"></div>
+</div>
 </section>
+<footer class="r5 fine">
+<p id="mixNote">Mixes are simulated with <a href="https://github.com/scrtwpns/mixbox">Mixbox</a> (Secret Weapons, CC BY-NC 4.0), the same pigment-mixing model artistpigments.org uses for its mixing paths, starting from the same measured colors. Real tinting strength isn't known, so a staining phthalo will dominate more on paper than here. Mixes start from each paint's masstone, the same color as its dot on the wheel; spectral.js (MIT) handles the color conversions. Treat it as a preview and confirm on paper.</p>
+<p>Color data: masstone measurements from <a href="https://artistpigments.org/brands/daniel-smith-extra-fine-watercolors">artistpigments.org</a> (CC BY-NC 4.0), handmade samples measured with a Nix Spectro 2. Earthy Light Red and Coral Reef aren't measured there yet, so they use Daniel Smith's <a href="https://danielsmith.com/daniel-smith-watercolors-cie-lab-coordinates/">published CIE Lab values</a>. Lightfastness, staining, granulation, transparency and price series: Daniel Smith's <a href="https://danielsmith.com/wp-content/uploads/2021/05/DS-Watercolor-pigment-characteristics.pdf">2021 pigment characteristics sheet</a>, plus retailer listings for King's Royal Blue and McCracken Black. Paints added after 2021 (the 2025 releases, both Jane's Blacks, Chrome Titanate Yellow) use Daniel Smith's own color-story pages. Single pigment means one Colour Index pigment on the label; PrimaTek minerals count as single. Reach is the area your palette covers in the a*b* plane, traced along the simulated mixing curve between every pair of your paints (Mixbox) rather than straight lines, so it bows inward between distant hues and outward between neighbors. It's a simulation from each paint's measured color, so treat it as a guide, not a measurement. The wheel doesn't show lightness; use the Lightness filter (0 is black, 100 is white) to narrow by it.</p>
+</footer>
 </div>
-<footer class="r5"><p class="fine" id="mixNote">Mixes are simulated with <a href="https://github.com/scrtwpns/mixbox">Mixbox</a> (Secret Weapons, CC BY-NC 4.0), the same pigment-mixing model artistpigments.org uses for its mixing paths, starting from the same measured colors. Real tinting strength isn't known, so a staining phthalo will dominate more on paper than here. Mixes start from each paint's masstone, the same color as its dot on the wheel; spectral.js (MIT) handles the color conversions. Treat it as a preview and confirm on paper.</p></footer>
-</div>
-<div id="tip"></div>
+<div id="tip" aria-hidden="true"></div>
+<div id="sheet" class="sheet" role="dialog" aria-labelledby="sheetTitle" hidden></div>
 <script>
 // ==========================================================
 //  MIXBOX 2.0 (c) 2022 Secret Weapons. All rights reserved.
@@ -1270,21 +1332,44 @@ for(let d=0;d<360;d+=30){const rad=d*Math.PI/180;el("line",{x1:0,y1:0,x2:100*Mat
 const ring=document.getElementById("ring");
 for(let d=0;d<360;d+=2.5){const a1=d*Math.PI/180,a2=(d+2.6)*Math.PI/180,r1=105,r2=111;const pt=(r,a)=>`${r*Math.cos(a)},${-r*Math.sin(a)}`;el("path",{d:`M${pt(r1,a1)}L${pt(r2,a1)}A${r2},${r2} 0 0 0 ${pt(r2,a2)}L${pt(r1,a2)}A${r1},${r1} 0 0 1 ${pt(r1,a1)}Z`,fill:lab2rgb(62,42*Math.cos((d+1.25)*Math.PI/180),42*Math.sin((d+1.25)*Math.PI/180))},ring)}
 const tip=document.getElementById("tip"),info=document.getElementById("info");
-function describe(p){const props=[p.mix?"Mixture":"Single pigment",p.lf?LFNAME[p.lf]:"Lightfastness not listed",p.trans?TNAME[p.trans]:null,p.stain?SNAME[p.stain]:null,p.gran?(p.gran==="G"?"Granulating":"Non-granulating"):null,p.series?"Series "+p.series:null].filter(Boolean);
- const w=fails(p);return `<b>${p.n}</b> ${dsLink(p)}${SRC_DS.includes(p.n)?" · color from Daniel Smith's data (not yet measured by artistpigments.org)":""}${st.sel.includes(p.n)?" · in your palette":""}<br>Hue ${p.h.toFixed(1)}°, chroma ${p.C.toFixed(1)}, lightness ${p.L}<br>${props.join(" · ")}${p.stain?"":" · other properties not listed"}${w.length?`<br>Outside your filters: ${w.join(", ")}`:""}`}
+// Touch has no hover, so taps open a sheet with details instead of toggling straight away.
+let lastPtr="mouse";
+document.addEventListener("pointerdown",e=>{lastPtr=e.pointerType||"mouse"},true);
+const touchy=()=>lastPtr!=="mouse";
+const noHover=matchMedia("(hover: none)");
+function showTip(txt,e){tip.textContent=txt;tip.style.opacity=1;moveTip(e)}
+function moveTip(e){const w=tip.offsetWidth;let x=e.clientX+14;if(x+w>innerWidth-8)x=e.clientX-14-w;tip.style.left=x+"px";tip.style.top=(e.clientY-tip.offsetHeight-10)+"px"}
+function hideTip(){tip.style.opacity=0}
+addEventListener("scroll",hideTip,{passive:true});
+// client coordinates to SVG user units, and how many user units one CSS pixel spans
+function svgPt(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+const unitsPerPx=svg=>248/svg.getBoundingClientRect().width;
+const propsOf=p=>[p.mix?"Mixture":"Single pigment",p.lf?LFNAME[p.lf]:"Lightfastness not listed",p.trans?TNAME[p.trans]:null,p.stain?SNAME[p.stain]:null,p.gran?(p.gran==="G"?"Granulating":"Non-granulating"):null,p.series?"Series "+p.series:null].filter(Boolean).join(" · ")+(p.stain?"":" · other properties not listed");
+const numsOf=p=>`Hue ${p.h.toFixed(1)}°, chroma ${p.C.toFixed(1)}, lightness ${p.L}`;
+const srcNote=p=>SRC_DS.includes(p.n)?"Color from Daniel Smith's data (not yet measured by artistpigments.org).":"";
+function describe(p){const w=fails(p);return `<b>${p.n}</b> ${dsLink(p)}${SRC_DS.includes(p.n)?" · color from Daniel Smith's data (not yet measured by artistpigments.org)":""}${st.sel.includes(p.n)?" · in your palette":""}<br>${numsOf(p)}<br>${propsOf(p)}${w.length?`<br>Outside your filters: ${w.join(", ")}`:""}`}
 function toggle(n){const i=st.sel.indexOf(n);if(i>=0){st.sel.splice(i,1);st.mix=st.mix.filter(m=>m!==n)}else st.sel.push(n);save();render()}
-const allg=document.getElementById("allg");
-P.forEach(p=>{const c=el("circle",{cx:p.x,cy:p.y,r:1.5,fill:p.rgb,stroke:"var(--paper)","stroke-width":.3,tabindex:0,role:"button","aria-label":p.n,style:"cursor:pointer"},allg);p.dot=c;
- c.addEventListener("pointerenter",()=>{tip.textContent=p.n;tip.style.opacity=1;info.innerHTML=describe(p)});
- c.addEventListener("pointermove",e=>{tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY-28)+"px"});
- c.addEventListener("pointerleave",()=>{tip.style.opacity=0});
- c.addEventListener("click",()=>{toggle(p.n);info.innerHTML=describe(p)});
+const wheel=document.getElementById("wheel"),allg=document.getElementById("allg"),focusg=document.getElementById("focusg");
+P.forEach(p=>{const c=el("circle",{cx:p.x,cy:p.y,r:1.5,fill:p.rgb,stroke:"var(--paper)","stroke-width":.3,tabindex:0,role:"button","aria-label":p.n,style:"cursor:pointer"},allg);p.dot=c;c._p=p;
+ c.addEventListener("pointerenter",e=>{if(e.pointerType!=="mouse")return;showTip(p.n,e);info.innerHTML=describe(p)});
+ c.addEventListener("pointermove",e=>{if(e.pointerType==="mouse")moveTip(e)});
+ c.addEventListener("pointerleave",hideTip);
+ c.addEventListener("focus",()=>{if(!touchy())info.innerHTML=describe(p)});
  c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle(p.n);info.innerHTML=describe(p)}})});
+wheel.addEventListener("click",e=>{
+ if(!touchy()){const p=e.target._p;if(p){toggle(p.n);info.innerHTML=describe(p)}return}
+ // fingers are much bigger than the dots: take every visible dot near the tap, closest first
+ if(document.activeElement&&document.activeElement._p)document.activeElement.blur();
+ const pt=svgPt(wheel,e),R=24*unitsPerPx(wheel);
+ const near=P.filter(p=>p.dot.style.display!=="none").map(p=>({p,d:Math.hypot(p.x-pt.x,p.y-pt.y)})).filter(o=>o.d<R).sort((a,b)=>a.d-b.d).map(o=>o.p);
+ if(near.length)openPaint(near[0],near.slice(1,6),e.clientY);else closeSheet()});
+if(noHover.matches)info.textContent="Tap near a dot to see its details and add it to your palette.";
 const hueSort=(a,b)=>(a.C<5)-(b.C<5)||((a.h+30)%360)-((b.h+30)%360);
 const EXT='<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>';
 const dsLink=p=>`<a class="ext" href="https://danielsmith.com/?s=${encodeURIComponent(p.n+" Watercolor")}" target="_blank" rel="noopener" title="Find ${p.n.replace(/"/g,"&quot;")} on danielsmith.com" aria-label="Find ${p.n.replace(/"/g,"&quot;")} on danielsmith.com (opens in a new tab)">${EXT}</a>`;
 const pts=h=>h.map(p=>`${p.x},${p.y}`).join(" ");
-function row(p,right,btnTxt,btnLabel,onClick){const li=document.createElement("li");li.className="row";li.innerHTML=`<span class="sw" style="background:${p.rgb}"></span><span class="nm">${p.n}${right.link?" "+dsLink(p):""}${right.note?`<br><span class="note">${right.note}</span>`:""}</span>${right.gain?`<span class="gain">${right.gain}</span>`:""}`;const b=document.createElement("button");b.className="x";b.textContent=btnTxt;b.setAttribute("aria-label",btnLabel);b.onclick=onClick;li.appendChild(b);li.addEventListener("pointerenter",()=>{info.innerHTML=describe(p);p.dot.setAttribute("r",3)});li.addEventListener("pointerleave",()=>render());return li}
+function row(p,right,btnTxt,btnLabel,onClick){const li=document.createElement("li");li.className="row";li.innerHTML=`<span class="sw" style="background:${p.rgb}"></span><span class="nm">${p.n}${right.link?" "+dsLink(p):""}${right.note?`<br><span class="note">${right.note}</span>`:""}</span>${right.gain?`<span class="gain">${right.gain}</span>`:""}`;const b=document.createElement("button");b.className="x";b.textContent=btnTxt;b.setAttribute("aria-label",btnLabel);b.onclick=onClick;li.appendChild(b);li.addEventListener("pointerenter",e=>{if(e.pointerType!=="mouse")return;info.innerHTML=describe(p);p.dot.setAttribute("r",3)});li.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse")p.dot.setAttribute("r",dotR(p))});return li}
+const dotR=p=>document.getElementById("showMine").checked&&st.sel.includes(p.n)?2.6:1.4;
 // filter chips
 function buildChips(){document.querySelectorAll(".chips").forEach(box=>{const key=box.dataset.key,many=box.dataset.mode==="many";box.innerHTML="";
  const opts=many?[["__any","Any"],...GROUPS[key]]:GROUPS[key];
@@ -1356,9 +1441,9 @@ function render(){
  const lg=document.getElementById("labg");lg.innerHTML="";
  if(mine&&document.getElementById("showLab").checked)sel.forEach(p=>{const r=Math.max(p.C,6),ux=p.x/r,uy=p.y/r,small=p.C<3;const t=el("text",{x:small?p.x+3.5:p.x+ux*4,y:small?p.y+1:p.y+uy*4+1,"font-size":3.1,fill:"var(--ink)","text-anchor":small?"start":(Math.abs(ux)<.25?"middle":(ux>0?"start":"end")),"paint-order":"stroke",stroke:"var(--paper)","stroke-width":1,"pointer-events":"none"},lg);t.textContent=p.n.replace(" Genuine","").replace("(Green Shade)","GS").replace("(Yellow Shade)","YS").replace("(Red Shade)","RS").replace("(Blue Shade)","BS")});
  document.getElementById("palCount").textContent=sel.length?`(${sel.length})`:"";
- document.getElementById("pct").textContent=Math.min(100,Math.round(A/FULL*100))+"%";
+ const pv=Math.min(100,Math.round(A/FULL*100));document.getElementById("pct").textContent=pv+"%";document.getElementById("pctBar").style.width=pv+"%";
  const pool=P.filter(passes),fA=poolArea(pool),selOk=sel.filter(passes),sA=M.sA??=(selOk.length===sel.length?A:envArea(envOf(selOk))),out=sel.length-selOk.length;
- document.getElementById("fpct").textContent=fA?Math.min(100,Math.round(sA/fA*100))+"%":"–";
+ const fv=fA?Math.min(100,Math.round(sA/fA*100)):0;document.getElementById("fpct").textContent=fA?fv+"%":"–";document.getElementById("fpctBar").style.width=fv+"%";
  document.getElementById("fnote").textContent=out?`${out} of your paints ${out===1?"is":"are"} outside your filters and not counted here.`:"";
  document.getElementById("fcount").textContent=`${pool.length} of ${P.length} paints match.`;
  const d=bA?((A-bA)/bA*100):0;document.getElementById("delta").textContent=bA?(Math.abs(d)<0.05?"Same reach as your stored palette.":`${d>0?"+":""}${d.toFixed(1)}% compared with your stored palette.`):"";
@@ -1370,7 +1455,7 @@ const gains=M.gains??=pool.filter(p=>!st.sel.includes(p.n)).map(p=>{if(!A)return
  const pu=document.getElementById("pal");pu.innerHTML="";
  [...sel].sort(hueSort).forEach(p=>{const parts=[];if(A){const loss=(M.loss??={})[p.n]??=(A-envArea(envOf(sel.filter(q=>q!==p))))/A*100;if(loss>=0.1)parts.push(`Sets the edge · removing it loses ${loss.toFixed(1)}%`)}const w=fails(p);if(w.length)parts.push("Outside your filters: "+w.join(", "));pu.appendChild(row(p,{note:parts.join("<br>"),link:true},"×","Remove "+p.n,()=>toggle(p.n)))});
  if(!sel.length)pu.innerHTML='<li class="fine">Tap dots on the wheel or search below to build a palette.</li>';
- search()}
+ search();drawFocus()}
 const q=document.getElementById("q"),res=document.getElementById("results");
 function search(){const v=q.value.trim().toLowerCase();res.innerHTML="";if(!v)return;const m=P.filter(p=>p.n.toLowerCase().includes(v)&&(passes(p)||st.sel.includes(p.n))).slice(0,30);if(!m.length){res.innerHTML='<li class="fine">No paints match that name and your filters.</li>';return}m.forEach(p=>{const s=st.sel.includes(p.n);res.appendChild(row(p,{},s?"×":"+",(s?"Remove ":"Add ")+p.n,()=>toggle(p.n)))})}
 q.addEventListener("input",search);
@@ -1387,57 +1472,147 @@ const specOf=p=>p.spec??=new spectral.Color(p.arr);
 function mixColor(A,B,t){return t<=0?specOf(A):t>=1?specOf(B):new spectral.Color(mixbox.lerp(A.arr,B.arr,t))}
 function xyzLab([X,Y,Z]){const f=t=>t>0.008856?Math.cbrt(t):7.787*t+16/116;const fx=f(X/0.95047),fy=f(Y),fz=f(Z/1.08883);return[116*fy-16,500*(fx-fy),200*(fy-fz)]}
 const TEX=`url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 .25  0 0 0 0 .22  0 0 0 0 .2  0 0 0 -2.6 1.35"/></filter><rect width="120" height="120" filter="url(#n)"/></svg>')}")`;
+// Mixbox mix of any number of paints (weights sum to 1), shifted by each paint's endpoint error
+// so pure paints land on their measured colors, the same correction mixPath applies.
+const errOf=p=>p.err??=(m=>[p.L-m[0],p.a-m[1],p.b-m[2]])(rgb2lab(mixbox.latentToRgb(p.lat)));
+function mixLab(ps,w){const z=new Array(mixbox.LATENT_SIZE).fill(0);ps.forEach((p,k)=>{for(let j=0;j<z.length;j++)z[j]+=w[k]*p.lat[j]});
+ return rgb2lab(mixbox.latentToRgb(z)).map((v,i)=>v+ps.reduce((s,p,k)=>s+w[k]*errOf(p)[i],0))}
+const hexOf=L=>"#"+lab2arr(...L).map(v=>v.toString(16).padStart(2,"0")).join("");
+const verb=()=>noHover.matches?"Tap":"Click";
+let mixFocus=null,sheetCtx=null,mixPts=[],mixSvg=null,markG=null;
 function renderMix(){
  const box=document.getElementById("mixPal");box.innerHTML="";
  st.mix=st.mix.filter(n=>st.sel.includes(n));if(st.mix3)st.mix=st.mix.slice(0,3);
  const full=st.mix3&&st.mix.length>=3;document.getElementById("mixClear").disabled=!st.mix.length;
- document.getElementById("mix3").checked=!!st.mix3;
+ document.getElementById("mix2btn").setAttribute("aria-pressed",!st.mix3);document.getElementById("mix3btn").setAttribute("aria-pressed",!!st.mix3);
+ document.getElementById("mixHelp").textContent=st.mix3?`Pick three paints to see every color they can make together. ${verb()} any dot for its color and recipe.`:`Pick two or more paints to see the mixing path between every pair. ${verb()} a dot on the chart, or anywhere along a strip, for the mixed color and its ratio.`;
  if(!st.sel.length)box.innerHTML='<li class="fine">Your palette is empty. Add paints on the wheel first.</li>';
- st.sel.map(n=>byName[n]).sort(hueSort).forEach(p=>{const on=st.mix.includes(p.n),dis=full&&!on;const li=document.createElement("li");li.className="row"+(dis?" dis":"")+(on?" picked":"");
-  li.innerHTML=`<input type="checkbox" ${on?"checked":""} ${dis?"disabled":""} aria-label="Mix ${p.n}"><span class="sw" style="background:${p.rgb}"></span><span class="nm">${p.n}${p.gran==="G"?'<br><span class="note">Granulating</span>':""}</span>`;
-  const cb=li.querySelector("input");const flip=()=>{if(dis)return;if(on)st.mix=st.mix.filter(m=>m!==p.n);else st.mix.push(p.n);save();renderMix()};
-  cb.addEventListener("change",flip);li.addEventListener("click",e=>{if(e.target!==cb)flip()});box.appendChild(li)});
- const bars=document.getElementById("bars");bars.innerHTML="";
- bars.appendChild(mixChart(st.mix.map(n=>byName[n]).sort(hueSort)))
+ st.sel.map(n=>byName[n]).sort(hueSort).forEach(p=>{const on=st.mix.includes(p.n),li=document.createElement("li"),b=document.createElement("button");
+  b.className="pchip";b.setAttribute("aria-pressed",on);b.disabled=full&&!on;
+  b.innerHTML=`<span class="sw" style="background:${p.rgb}"></span><span>${p.n}${p.gran==="G"?'<br><span class="gr">Granulating</span>':""}</span>`;
+  b.onclick=()=>{if(on)st.mix=st.mix.filter(m=>m!==p.n);else st.mix.push(p.n);save();renderMix()};li.appendChild(b);box.appendChild(li)});
+ if(st.mix3||!st.mix.includes(mixFocus))mixFocus=null;
+ const ms=st.mix.map(n=>byName[n]).sort(hueSort),bars=document.getElementById("bars");bars.innerHTML="";
+ bars.appendChild(mixChart(ms));
+ const tri=st.mix3&&ms.length===3;
+ if(!tri&&ms.length>1){const pw=document.createElement("div");pw.className="pairs";pw.id="pairs";bars.appendChild(pw);renderPairs(ms)}
+ // keep an open recipe only while its paints are still in the mix
+ if(sheetCtx&&sheetCtx.kind==="mix"&&!(sheetCtx.ps.every(p=>st.mix.includes(p.n))&&(sheetCtx.ps.length===3)===tri))closeSheet();
+ drawMark();updateTicks()
 }
-// three-way Mixbox mixes over a barycentric grid, corrected so the corners land on the measured colors
-function mixTri(A,B,C,n){const P=[A,B,C],z=new Array(mixbox.LATENT_SIZE),out=[];
- const mix=w=>{for(let j=0;j<z.length;j++)z[j]=w[0]*A.lat[j]+w[1]*B.lat[j]+w[2]*C.lat[j];return rgb2lab(mixbox.latentToRgb(z))};
- const err=P.map((p,k)=>{const w=[0,0,0];w[k]=1;const m=mix(w);return[p.L-m[0],p.a-m[1],p.b-m[2]]});
- for(let i=0;i<=n;i++)for(let j=0;j<=n-i;j++){const w=[i/n,j/n,(n-i-j)/n],m=mix(w);out.push({w,lab:m.map((v,k)=>v+w[0]*err[0][k]+w[1]*err[1][k]+w[2]*err[2][k])})}
- return out}
 function hilite(sel){document.querySelectorAll(".mchart .mpath").forEach(g=>{const on=sel==null||g.dataset.a===sel||g.dataset.b===sel||g.dataset.k===sel;g.style.opacity=on?1:.12})}
+const recipeTxt=(ps,w)=>ps.map((p,k)=>w[k]?`${w[k]}% ${p.n}`:null).filter(Boolean).join("\n");
+function nearestMix(pt,R){let best=null,bd=R;for(const m of mixPts){if(mixFocus&&!m.ps.some(p=>p.n===mixFocus))continue;const d=Math.hypot(m.x-pt.x,m.y-pt.y);if(d<bd){bd=d;best=m}}return best}
 function mixChart(ms){
- const hexOf=L=>"#"+lab2arr(...L).map(v=>v.toString(16).padStart(2,"0")).join("");
  const fig=document.createElement("figure");fig.className="mchart";
  const svg=el("svg",{viewBox:"-124 -124 248 248",role:"img","aria-label":ms.length?`Mixing paths between ${ms.map(p=>p.n).join(", ")} on the a*b* color plane`:"Empty a*b* color plane for mixing"},fig);
+ mixSvg=svg;mixPts=[];
  for(const r of [20,40,60,80,100]){el("circle",{r,fill:"none",stroke:"var(--rule)","stroke-width":r===100?.5:.3},svg);const t=el("text",{x:1.2,y:-r-1,"font-size":3.2,fill:"var(--graphite)"},svg);t.textContent=r}
  // same grid and hue ring as the wheel at the top of the page
  for(let d=0;d<360;d+=30){const rad=d*Math.PI/180;el("line",{x1:0,y1:0,x2:100*Math.cos(rad),y2:-100*Math.sin(rad),stroke:"var(--rule)","stroke-width":.25},svg);const t=el("text",{x:117*Math.cos(rad),y:-117*Math.sin(rad)+1.1,"font-size":3.2,fill:"var(--graphite)","text-anchor":"middle"},svg);t.textContent=d+"°"}
  svg.appendChild(document.getElementById("ring").cloneNode(true)).removeAttribute("id");
  const tri=st.mix3&&ms.length===3;
- if(tri){const[A,B,C]=ms,g=el("g",{},svg);
-  mixTri(A,B,C,14).forEach(({w,lab})=>{const c=el("circle",{cx:lab[1],cy:-lab[2],r:1.6,fill:hexOf(lab),"fill-opacity":.95},g);
-   el("title",{},c).textContent=ms.map((p,k)=>`${Math.round(w[k]*100)}% ${p.n}`).filter(s=>!s.startsWith("0%")).join(" · ")+`\nL ${lab[0].toFixed(0)}, a ${lab[1].toFixed(0)}, b ${lab[2].toFixed(0)}`})}
- else{const n=ms.length>6?16:STEPS-1,rad=ms.length>6?1.1:1.6;
+ if(tri){const g=el("g",{},svg),n=20;
+  for(let i=0;i<=n;i++)for(let j=0;j<=n-i;j++){const w=[i*5,j*5,(n-i-j)*5],lab=mixLab(ms,w.map(v=>v/100));
+   el("circle",{cx:lab[1],cy:-lab[2],r:1.5,fill:hexOf(lab),"fill-opacity":.95},g);mixPts.push({x:lab[1],y:-lab[2],ps:ms,w})}}
+ else{const n=ms.length>6?10:20,rad=ms.length>6?1.6:2.1;
   for(let i=0;i<ms.length;i++)for(let j=i+1;j<ms.length;j++){const A=ms[i],B=ms[j];
    const g=el("g",{class:"mpath"},svg);g.dataset.a=A.n;g.dataset.b=B.n;g.dataset.k=A.n+"|"+B.n;
-   g.addEventListener("pointerenter",()=>hilite(A.n+"|"+B.n));g.addEventListener("pointerleave",()=>hilite(null));
-   mixPath(A,B,n).forEach((L,k)=>{if(k===0||k===n)return;const t=k/n,c=el("circle",{cx:L[1],cy:-L[2],r:rad,fill:hexOf(L)},g);
-    const pa=Math.round((1-t)*100);el("title",{},c).textContent=`${pa}% ${A.n} · ${100-pa}% ${B.n}\nL ${L[0].toFixed(0)}, a ${L[1].toFixed(0)}, b ${L[2].toFixed(0)}`})}}
+   mixPath(A,B,n).forEach((L,k)=>{if(k===0||k===n)return;const pb=Math.round(k/n*100);el("circle",{cx:L[1],cy:-L[2],r:rad,fill:hexOf(L)},g);mixPts.push({x:L[1],y:-L[2],ps:[A,B],w:[100-pb,pb],k:g.dataset.k})})}}
  const placed=[];
  const label=(p,L)=>{const r=Math.hypot(L[1],L[2])||1,ux=L[1]/r,uy=-L[2]/r;let off=6,x,y;
   for(let k=0;k<8;k++){x=L[1]+ux*off;y=-L[2]+uy*off+1.2;if(!placed.some(q=>Math.abs(q[0]-x)<22&&Math.abs(q[1]-y)<4.6))break;off+=5}
   placed.push([x,y]);const t=el("text",{x,y,"font-size":3.8,fill:"var(--ink)","text-anchor":Math.abs(ux)<.3?"middle":ux>0?"start":"end","paint-order":"stroke",stroke:"var(--paper)","stroke-width":1.2,"pointer-events":"none"},svg);t.textContent=p.n};
- ms.forEach(p=>{const c=el("circle",{cx:p.a,cy:-p.b,r:3.6,fill:p.rgb,stroke:"var(--ink)","stroke-width":.6,style:"cursor:pointer"},svg);el("title",{},c).textContent=p.n+(p.gran==="G"?" (granulating)":"");
-  if(!tri){c.addEventListener("pointerenter",()=>hilite(p.n));c.addEventListener("pointerleave",()=>hilite(null))}});
+ ms.forEach(p=>el("circle",{cx:p.a,cy:-p.b,r:3.6,fill:p.rgb,stroke:"var(--ink)","stroke-width":.6,style:"cursor:pointer"},svg));
  ms.forEach(p=>label(p,[p.L,p.a,p.b]));
+ markG=el("g",{"pointer-events":"none"},svg);
+ // hit testing by distance, so dots a few pixels wide still work under a finger
+ const paintAt=(pt,R)=>tri?null:ms.map(p=>({p,d:Math.hypot(p.a-pt.x,-p.b-pt.y)})).filter(o=>o.d<R).sort((a,b)=>a.d-b.d)[0]?.p;
+ svg.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const pt=svgPt(svg,e),u=unitsPerPx(svg),p=paintAt(pt,Math.max(4.5,8*u));
+  if(p){svg.style.cursor="pointer";showTip(p.n+(p.gran==="G"?" (granulating)":""),e);if(!mixFocus)hilite(p.n);return}
+  const m=nearestMix(pt,10*u);svg.style.cursor=m?"pointer":"";
+  if(m){showTip(recipeTxt(m.ps,m.w),e);if(!mixFocus&&m.k)hilite(m.k)}else{hideTip();hilite(mixFocus)}});
+ svg.addEventListener("pointerleave",()=>{hideTip();hilite(mixFocus)});
+ svg.addEventListener("click",e=>{const pt=svgPt(svg,e),u=unitsPerPx(svg),p=paintAt(pt,Math.max(4.5,(touchy()?12:8)*u));
+  if(p){mixFocus=mixFocus===p.n?null:p.n;hilite(mixFocus);renderPairs(ms);updateTicks();return}
+  const m=nearestMix(pt,(touchy()?24:12)*u);if(m)openMix(m.ps,m.w,e.clientY)});
  const cap=document.createElement("figcaption");cap.className="fine";
- cap.innerHTML=tri?`Each dot is a mix of the three paints in 7% steps, from the pure paints at the corners to equal parts in the middle; hover a dot for its recipe. The spread shows every color the three can make together.`:ms.length>1?`Each dot is one step of a two-paint mix. Hover a paint to focus on its mixes, or a path or dot to see a ratio.`:ms.length?`Pick another paint to draw its mixing path from ${ms[0].n}.`:`Pick paints from your palette to draw their mixing paths here.`;
- fig.appendChild(cap);return fig}
+ cap.innerHTML=tri?`Each dot is a mix of the three paints in 5% steps, from the pure paints at the corners to equal parts in the middle. ${verb()} a dot for its color and recipe.`
+  :st.mix3&&ms.length?`Pick ${3-ms.length} more paint${ms.length===2?"":"s"} to see everything the three make together.`
+  :ms.length>1?`Each dot is one ${ms.length>6?10:5}% step of a two-paint mix. ${verb()} a dot for its color and ratio, or a paint to focus on its mixes.`
+  :ms.length?`Pick another paint to draw its mixing path from ${ms[0].n}.`:`Pick paints from your palette to draw their mixing paths here.`;
+ fig.appendChild(cap);if(mixFocus)requestAnimationFrame(()=>hilite(mixFocus));return fig}
+// gradient strips, one per pair: easy to tap anywhere along on a phone
+function renderPairs(ms){const box=document.getElementById("pairs");if(!box)return;box.innerHTML="";
+ let pairs=[];for(let i=0;i<ms.length;i++)for(let j=i+1;j<ms.length;j++)pairs.push([ms[i],ms[j]]);
+ if(mixFocus)pairs=pairs.filter(([A,B])=>A.n===mixFocus||B.n===mixFocus);
+ else if(pairs.length>21){box.innerHTML=`<p class="fine">${pairs.length} pairs is a lot of strips. ${verb()} a paint on the chart to list just its mixes.</p>`;return}
+ if(mixFocus){const f=document.createElement("p");f.className="fine";f.innerHTML=`Showing mixes with ${mixFocus}. <button class="link">Show all pairs</button>`;f.querySelector("button").onclick=()=>{mixFocus=null;hilite(null);renderPairs(ms);updateTicks()};box.appendChild(f)}
+ pairs.forEach(([A,B])=>{const d=document.createElement("div");d.className="pair";
+  const stops=mixPath(A,B,20).map((L,k)=>`${hexOf(L)} ${k*5}%`).join(",");const gran=A.gran==="G"||B.gran==="G";
+  d.innerHTML=`<div class="bl"><span>${A.n}</span><span>${B.n}</span></div><div class="strip" role="button" tabindex="0" aria-label="Mix ${A.n.replace(/"/g,"&quot;")} with ${B.n.replace(/"/g,"&quot;")}" style="background:linear-gradient(to right,${stops})">${gran?`<div class="tex" style="background-image:${TEX}"></div>`:""}</div>`;
+  const s=d.querySelector(".strip");s.dataset.k=A.n+"|"+B.n;
+  s.addEventListener("click",e=>{const r=s.getBoundingClientRect(),pb=Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*20)*5;openMix([A,B],[100-pb,pb],e.clientY)});
+  s.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openMix([A,B],[50,50])}});
+  if(!noHover.matches){s.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const r=s.getBoundingClientRect(),pb=Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*20)*5;showTip(recipeTxt([A,B],[100-pb,pb]),e)});s.addEventListener("pointerleave",hideTip)}
+  box.appendChild(d)})}
+function updateTicks(){document.querySelectorAll(".strip .tick").forEach(t=>t.remove());
+ if(!sheetCtx||sheetCtx.kind!=="mix"||sheetCtx.ps.length!==2)return;const[A,B]=sheetCtx.ps,s=document.querySelector(`.strip[data-k="${CSS.escape(A.n+"|"+B.n)}"]`);
+ if(s){const t=document.createElement("span");t.className="tick";t.style.left=sheetCtx.w[1]+"%";s.appendChild(t)}}
+function drawMark(){if(!markG)return;markG.innerHTML="";if(!sheetCtx||sheetCtx.kind!=="mix")return;
+ const L=mixLab(sheetCtx.ps,sheetCtx.w.map(v=>v/100));
+ el("circle",{cx:L[1],cy:-L[2],r:4.6,fill:"none",stroke:"var(--paper)","stroke-width":1.6},markG);
+ el("circle",{cx:L[1],cy:-L[2],r:4.6,fill:hexOf(L),stroke:"var(--ink)","stroke-width":.8},markG)}
+function drawFocus(){focusg.innerHTML="";if(!sheetCtx||sheetCtx.kind!=="paint")return;const p=sheetCtx.p;
+ el("circle",{cx:p.x,cy:p.y,r:4.6,fill:"none",stroke:"var(--paper)","stroke-width":1.6},focusg);
+ el("circle",{cx:p.x,cy:p.y,r:4.6,fill:"none",stroke:"var(--ink)","stroke-width":.8},focusg)}
+// simplest whole-number parts that stay within about 2.5% of each share
+function partsOf(w){const nz=w.filter(v=>v>0).length;if(nz<2)return null;
+ for(let N=2;N<=24;N++){const parts=w.map(v=>Math.round(v/100*N));if(w.some((v,i)=>v>0&&!parts[i]))continue;const s=parts.reduce((a,b)=>a+b,0);
+  if(w.every((v,i)=>Math.abs(parts[i]/s-v/100)<=.026))return parts}
+ const g=(a,b)=>b?g(b,a%b):a,d=w.reduce((a,v)=>g(a,v),0);return w.map(v=>v/d)}
+// ---- detail sheet ----
+const sheet=document.getElementById("sheet");
+const closeBtn='<button class="x sh-close" aria-label="Close">×</button>';
+function openPaint(p,near=[],y){sheetCtx={kind:"paint",p,near};drawSheet();drawFocus();drawMark();updateTicks();keepVisible(y)}
+function openMix(ps,w,y){sheetCtx={kind:"mix",ps,w:[...w]};drawSheet();drawFocus();drawMark();updateTicks();keepVisible(y)}
+function closeSheet(){if(!sheetCtx)return;sheetCtx=null;sheet.hidden=true;sheet.innerHTML="";document.body.style.paddingBottom="";drawFocus();drawMark();updateTicks()}
+// on phones the sheet covers the bottom of the screen: leave room to scroll, and lift what was tapped above it
+const bottomSheet=matchMedia("(max-width:759px)");
+function keepVisible(y){if(!bottomSheet.matches){document.body.style.paddingBottom="";return}const h=sheet.offsetHeight;document.body.style.paddingBottom=h+"px";
+ if(y==null)return;const top=innerHeight-h-56;if(y>top)scrollBy({top:y-top,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})}
+function drawSheet(){const c=sheetCtx;sheet.hidden=false;
+ if(c.kind==="paint"){const p=c.p,inPal=st.sel.includes(p.n),w=fails(p);
+  sheet.innerHTML=`<div class="sh-head"><span class="sh-sw" style="background:${p.rgb}"></span><div class="sh-t"><h3 id="sheetTitle">${p.n} ${dsLink(p)}</h3><p class="note">${numsOf(p)}</p></div>${closeBtn}</div>
+<p class="sh-props">${propsOf(p)}${srcNote(p)?"<br>"+srcNote(p):""}</p>${w.length?`<p class="sh-warn">Outside your filters: ${w.join(", ")}</p>`:""}
+<button class="primary${inPal?" rm":""}" data-act="toggle">${inPal?"Remove from palette":"Add to palette"}</button>
+${c.near.length?`<div class="sh-near"><span class="flabel">Also near your tap</span><div class="chips">${c.near.map((q,i)=>`<button class="chip" data-i="${i}"><span class="sw" style="background:${q.rgb}"></span>${q.n}</button>`).join("")}</div></div>`:""}`;
+  sheet.querySelector("[data-act=toggle]").onclick=()=>{toggle(p.n);drawSheet()};
+  sheet.querySelectorAll(".sh-near .chip").forEach(b=>b.onclick=()=>{const q=c.near[+b.dataset.i];openPaint(q,[p,...c.near.filter(o=>o!==q)])})}
+ else{const{ps}=c,gran=ps.filter(p=>p.gran==="G");
+  sheet.innerHTML=`<div class="sh-head"><span class="sh-sw mix" id="mixSw">${gran.length?`<span class="tex" style="background-image:${TEX}"></span>`:""}</span><div class="sh-t"><h3 id="sheetTitle"><span class="parts" id="mixParts"></span></h3><p class="note" id="mixNums"></p></div>${closeBtn}</div>
+<div class="ratio" id="mixBar">${ps.map(p=>`<span style="background:${p.rgb}"></span>`).join("")}</div>
+<div class="rec">${ps.map((p,k)=>`<span class="sw" style="background:${p.rgb}"></span><span class="nm">${p.n} <span class="note" id="pp${k}"></span></span><span class="pc" id="pc${k}"></span>${ps.length===3?`<input type="range" min="0" max="100" step="5" data-k="${k}" aria-label="Share of ${p.n.replace(/"/g,"&quot;")}">`:""}`).join("")}</div>
+${ps.length===2?`<div class="two"><span class="sw" style="background:${ps[0].rgb}"></span><input type="range" min="0" max="100" step="5" data-k="1" aria-label="Share of ${ps[1].n.replace(/"/g,"&quot;")}"><span class="sw" style="background:${ps[1].rgb}"></span></div>`:""}
+<p class="fine" style="margin:0">${gran.length?`${gran.map(p=>p.n).join(" and ")} granulate${gran.length===1?"s":""}, so expect texture. `:""}Drag to adjust. Assumes equal strength, so a staining paint takes over faster on paper.</p>`;
+  sheet.querySelectorAll("input[type=range]").forEach(r=>r.addEventListener("input",()=>setShare(+r.dataset.k,+r.value)));
+  updateMixSheet()}
+ sheet.querySelector(".sh-close").onclick=closeSheet}
+function setShare(k,v){const w=sheetCtx.w;if(w.length===2){w[k]=v;w[1-k]=100-v}
+ else{const o=[0,1,2].filter(i=>i!==k),rem=100-v,s=w[o[0]]+w[o[1]],a=s?Math.round(rem*w[o[0]]/s/5)*5:Math.round(rem/10)*5;w[o[0]]=a;w[o[1]]=rem-a;w[k]=v}
+ updateMixSheet()}
+function updateMixSheet(){const{ps,w}=sheetCtx,L=mixLab(ps,w.map(v=>v/100)),hex=hexOf(L),parts=partsOf(w);
+ document.getElementById("mixSw").style.background=hex;
+ document.getElementById("mixParts").textContent=parts?parts.filter(Boolean).join(" : ")+" mix":"Pure paint";
+ document.getElementById("mixNums").textContent=`${hex.toUpperCase()} · L ${L[0].toFixed(0)}, a ${L[1].toFixed(0)}, b ${L[2].toFixed(0)}`;
+ document.querySelectorAll("#mixBar span").forEach((s,k)=>s.style.width=w[k]+"%");
+ ps.forEach((p,k)=>{document.getElementById("pc"+k).textContent=w[k]+"%";document.getElementById("pp"+k).textContent=parts?`· ${parts[k]} part${parts[k]===1?"":"s"}`:"";
+  const r=sheet.querySelector(`input[type=range][data-k="${k}"]`);if(r&&+r.value!==w[k])r.value=w[k]});
+ drawMark();updateTicks()}
+addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
 document.getElementById("mixClear").onclick=()=>{st.mix=[];save();renderMix()};
-document.getElementById("mix3").addEventListener("change",e=>{st.mix3=e.target.checked;save();renderMix()});
-
+document.getElementById("mix2btn").onclick=()=>{st.mix3=false;save();renderMix()};
+document.getElementById("mix3btn").onclick=()=>{st.mix3=true;save();renderMix()};
 const _render=render;render=function(){_render();renderMix()};
 buildChips();render();
 </script>

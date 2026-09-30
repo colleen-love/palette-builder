@@ -70,10 +70,12 @@
 </div>
 <div id="info" aria-live="polite">Loading paints…</div>
 </div>
-<div class="card addcard">
-<h3>Add any paint</h3>
-<input type="search" id="q" placeholder="Search by name, brand or pigment" aria-label="Search paints" autocomplete="off">
-<ul id="results"></ul>
+<div class="card reachcard">
+<h3>Reach</h3>
+<div class="meter"><div class="ml"><span class="big" data-r="pct"></span><span>of the full range across all brands</span></div><div class="track"><div class="fillbar" data-r="pctBar"></div></div></div>
+<div class="meter"><div class="ml"><span class="big" data-r="fpct"></span><span>of the range that meets your filters</span></div><div class="track"><div class="fillbar" data-r="fpctBar"></div></div></div>
+<p class="delta" data-r="fnote"></p>
+<p class="delta" data-r="delta"></p>
 </div>
 </div>
 </section>
@@ -83,12 +85,17 @@
 <div class="plgrid">
 <div class="card"><ul id="pal"></ul></div>
 <div class="side">
-<div class="card">
+<div class="card addcard">
+<h3>Add any paint</h3>
+<input type="search" id="q" placeholder="Search by name, brand or pigment" aria-label="Search paints" autocomplete="off">
+<ul id="results"></ul>
+</div>
+<div class="card reachcard">
 <h3>Reach</h3>
-<div class="meter"><div class="ml"><span class="big" id="pct"></span><span>of the full range across all brands</span></div><div class="track"><div class="fillbar" id="pctBar"></div></div></div>
-<div class="meter"><div class="ml"><span class="big" id="fpct"></span><span>of the range that meets your filters</span></div><div class="track"><div class="fillbar" id="fpctBar"></div></div></div>
-<p class="delta" id="fnote"></p>
-<p class="delta" id="delta"></p>
+<div class="meter"><div class="ml"><span class="big" data-r="pct"></span><span>of the full range across all brands</span></div><div class="track"><div class="fillbar" data-r="pctBar"></div></div></div>
+<div class="meter"><div class="ml"><span class="big" data-r="fpct"></span><span>of the range that meets your filters</span></div><div class="track"><div class="fillbar" data-r="fpctBar"></div></div></div>
+<p class="delta" data-r="fnote"></p>
+<p class="delta" data-r="delta"></p>
 </div>
 <div class="card">
 <h3>Biggest gains</h3>

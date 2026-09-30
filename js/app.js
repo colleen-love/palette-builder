@@ -19,7 +19,7 @@ const byId=Object.fromEntries(P.map(p=>[p.id,p]));
 const $=id=>document.getElementById(id);
 
 // ---- state ----
-const DEFF={brand:[],lf:[],pig:["any"],trans:[],stain:[],gran:["any"],series:[],avail:["cur"],light:[0,100],missing:true};
+const DEFF={brand:[],lf:[],pig:["any"],trans:[],stain:[],gran:["any"],series:[],avail:["cur"],light:[0,100]};
 const KEY="wpb:v2";
 const clone=o=>JSON.parse(JSON.stringify(o));
 function load(){const s={sel:[],base:[],mix:[],mix3:false,f:clone(DEFF)};
@@ -39,14 +39,15 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
 const inPal=p=>st.sel.includes(p.id);
 
 // why a paint fails the filters (empty array = passes)
-function fails(p){const f=st.f,w=[],miss=f.missing;
+// A paint with no data for a filter you have set is left out: unknown is not a match.
+function fails(p){const f=st.f,w=[];
  if(f.brand.length&&!f.brand.includes(p.brand))w.push(p.bs);
- if(f.lf.length){if(!p.lf){if(!miss)w.push("no lightfastness data")}else if(!f.lf.includes(String(p.lf)))w.push("lightfastness "+ROMAN[p.lf])}
- if(f.pig[0]==="single"){if(p.single===false)w.push("mixture");else if(p.single==null&&!miss)w.push("no pigment data")}
- if(f.trans.length){if(!p.trans){if(!miss)w.push("no transparency data")}else if(!f.trans.includes(p.trans))w.push(TNAME[p.trans].toLowerCase())}
- if(f.stain.length){if(!p.stain){if(!miss)w.push("no staining data")}else if(!f.stain.includes(String(p.stain)))w.push(SNAME[p.stain].toLowerCase())}
- const g=f.gran[0];if(g!=="any"){if(!p.gran){if(!miss)w.push("no granulation data")}else if(p.gran!==g)w.push(p.gran==="G"?"granulating":"smooth")}
- if(f.series.length){if(!p.series){if(!miss)w.push("no series data")}else if(!f.series.includes(p.series))w.push("series "+p.series)}
+ if(f.lf.length){if(!p.lf){w.push("no lightfastness data")}else if(!f.lf.includes(String(p.lf)))w.push("lightfastness "+ROMAN[p.lf])}
+ if(f.pig[0]==="single"){if(p.single===false)w.push("mixture");else if(p.single==null)w.push("no pigment data")}
+ if(f.trans.length){if(!p.trans){w.push("no transparency data")}else if(!f.trans.includes(p.trans))w.push(TNAME[p.trans].toLowerCase())}
+ if(f.stain.length){if(!p.stain){w.push("no staining data")}else if(!f.stain.includes(String(p.stain)))w.push(SNAME[p.stain].toLowerCase())}
+ const g=f.gran[0];if(g!=="any"){if(!p.gran){w.push("no granulation data")}else if(p.gran!==g)w.push(p.gran==="G"?"granulating":"smooth")}
+ if(f.series.length){if(!p.series){w.push("no series data")}else if(!f.series.includes(p.series))w.push("series "+p.series)}
  if(f.avail[0]==="cur"&&p.disc)w.push("discontinued");
  if(p.L<f.light[0]||p.L>f.light[1])w.push("lightness "+p.L);
  return w}
@@ -139,7 +140,6 @@ function buildChips(){const G=groups();
    const on=many?(v==="__any"?st.f[key].length===0:st.f[key].includes(v)):st.f[key][0]===v;b.setAttribute("aria-pressed",on);
    b.onclick=()=>{if(many){if(v==="__any")st.f[key]=[];else{const i=st.f[key].indexOf(v);if(i>=0)st.f[key].splice(i,1);else st.f[key].push(v);if(st.f[key].length===G[key].length)st.f[key]=[]}}else st.f[key]=[v];save();buildChips();render()};
    box.appendChild(b)})});
- st.f.missing=true;
  const n=["brand","lf","trans","stain","series"].filter(k=>st.f[k].length).length+(st.f.pig[0]!=="any")+(st.f.gran[0]!=="any")+(st.f.avail[0]!=="cur")+(st.f.light[0]!==0||st.f.light[1]!==100);
  $("fBadge").textContent=n;$("fBadge").hidden=!n}
 $("clearF").onclick=()=>{st.f=clone(DEFF);save();buildChips();syncLight();render()};
@@ -214,7 +214,9 @@ function render(){
  const pool=P.filter(passes),fA=poolArea(pool),selOk=sel.filter(passes),sA=M.sA??=(selOk.length===sel.length?A:envArea(envOf(selOk))),out=sel.length-selOk.length;
  const fv=fA?Math.min(100,Math.round(sA/fA*100)):0;R("fpct",e=>e.textContent=fA?fv+"%":"–");R("fpctBar",e=>e.style.width=fv+"%");
  const fn=out?`${out} of your paints ${out===1?"is":"are"} outside your filters and not counted here.`:"";R("fnote",e=>e.textContent=fn);
- const cnt=`${pool.length} of ${P.length} paints match.`;$("fcount").textContent=cnt;$("fcountTop").textContent=cnt;
+ // say how many were dropped only for lack of data, so a short list is explainable
+ const noData=P.filter(p=>{const w=fails(p);return w.length&&w.every(r=>r.startsWith("no "))}).length;
+ const cnt=`${pool.length} of ${P.length} paints match.`+(noData?` ${noData} more have no data for a filter you set.`:"");$("fcount").textContent=cnt;$("fcountTop").textContent=cnt;
  const d=bA?((A-bA)/bA*100):0;const dt=bA?(Math.abs(d)<0.05?"Same reach as your stored palette.":`${d>0?"+":""}${d.toFixed(1)}% compared with your stored palette.`):"";R("delta",e=>e.textContent=dt);
  // only paints near or past the current edge can push it out; skip the rest to stay quick with many brands
  const gains=M.gains??=(A?pool.filter(p=>!inPal(p)&&p.C>=.85*E[binOf(Math.atan2(p.b,p.a))]):[]).map(p=>{const e=E.slice();addPoint(e,p.a,p.b);sel.forEach(q=>addPair(e,p,q));return{p,g:(envArea(e)-A)/A*100}}).filter(o=>o.g>=0.5).sort((a,b)=>b.g-a.g).slice(0,6);

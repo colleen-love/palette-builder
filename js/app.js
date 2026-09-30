@@ -206,12 +206,14 @@ function render(){
  if(mine&&$("showLab").checked)sel.forEach(p=>{const r=Math.max(p.C,6),ux=p.x/r,uy=p.y/r,small=p.C<3;const t=el("text",{x:small?p.x+3.5:p.x+ux*4,y:small?p.y+1:p.y+uy*4+1,"font-size":3.1,fill:"var(--ink)","text-anchor":small?"start":(Math.abs(ux)<.25?"middle":(ux>0?"start":"end")),"paint-order":"stroke",stroke:"var(--paper)","stroke-width":1,"pointer-events":"none"},lg);t.textContent=nameIn(p,sel)});
  $("palCount").textContent=sel.length?`(${sel.length})`:"";
  $("palBadge").textContent=sel.length;$("palBadge").hidden=!sel.length;
- const pv=Math.min(100,Math.round(A/FULL*100));$("pct").textContent=pv+"%";$("pctBar").style.width=pv+"%";
+ const R=(k,f)=>document.querySelectorAll(`[data-r="${k}"]`).forEach(f);
+ // reach shows in both Pigments and Palette
+ const pv=Math.min(100,Math.round(A/FULL*100));R("pct",e=>e.textContent=pv+"%");R("pctBar",e=>e.style.width=pv+"%");
  const pool=P.filter(passes),fA=poolArea(pool),selOk=sel.filter(passes),sA=M.sA??=(selOk.length===sel.length?A:envArea(envOf(selOk))),out=sel.length-selOk.length;
- const fv=fA?Math.min(100,Math.round(sA/fA*100)):0;$("fpct").textContent=fA?fv+"%":"–";$("fpctBar").style.width=fv+"%";
- $("fnote").textContent=out?`${out} of your paints ${out===1?"is":"are"} outside your filters and not counted here.`:"";
+ const fv=fA?Math.min(100,Math.round(sA/fA*100)):0;R("fpct",e=>e.textContent=fA?fv+"%":"–");R("fpctBar",e=>e.style.width=fv+"%");
+ const fn=out?`${out} of your paints ${out===1?"is":"are"} outside your filters and not counted here.`:"";R("fnote",e=>e.textContent=fn);
  const cnt=`${pool.length} of ${P.length} paints match.`;$("fcount").textContent=cnt;$("fcountTop").textContent=cnt;
- const d=bA?((A-bA)/bA*100):0;$("delta").textContent=bA?(Math.abs(d)<0.05?"Same reach as your stored palette.":`${d>0?"+":""}${d.toFixed(1)}% compared with your stored palette.`):"";
+ const d=bA?((A-bA)/bA*100):0;const dt=bA?(Math.abs(d)<0.05?"Same reach as your stored palette.":`${d>0?"+":""}${d.toFixed(1)}% compared with your stored palette.`):"";R("delta",e=>e.textContent=dt);
  // only paints near or past the current edge can push it out; skip the rest to stay quick with many brands
  const gains=M.gains??=(A?pool.filter(p=>!inPal(p)&&p.C>=.85*E[binOf(Math.atan2(p.b,p.a))]):[]).map(p=>{const e=E.slice();addPoint(e,p.a,p.b);sel.forEach(q=>addPair(e,p,q));return{p,g:(envArea(e)-A)/A*100}}).filter(o=>o.g>=0.5).sort((a,b)=>b.g-a.g).slice(0,6);
  const gu=$("gains");gu.innerHTML="";

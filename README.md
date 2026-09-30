@@ -6,7 +6,9 @@ An interactive hue–chroma wheel of every Daniel Smith Extra Fine watercolor, f
 
 Tap paints to build a palette. The shaded wash shows the range your palette can reach, and the sidebar shows how much of the full Daniel Smith range (and of the range that meets your filters) you cover, which paints would widen it most, and which of your paints set the edge.
 
-A Mixing section lets you pick two palette paints and see their mix as a strip and as a path on the a\*b\* color plane, with texture where a paint granulates.
+A Mixing section draws the mixing paths between palette paints on the a\*b\* color plane, with a strip per pair (textured where a paint granulates), or everything three paints can make together. Tap any dot or any point along a strip to open the mixed color with its percentages and simplest parts ratio, and drag to adjust it.
+
+On phones, tapping near a dot on the wheel opens a sheet with its details, an Add/Remove button and any other paints near your tap, since there's no hover.
 
 Filter by lightfastness, single pigment vs. mixture, transparency, staining, granulation, and price series. Your palette and filters are saved in your browser.
 

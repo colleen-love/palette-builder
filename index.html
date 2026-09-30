@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F3F1EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151618" media="(prefers-color-scheme: dark)">
+<script>try{const t=localStorage.getItem("dswheel:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <title>Daniel Smith pigment wheel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +17,7 @@
 --shadow:0 1px 2px rgba(40,32,20,.04),0 6px 24px rgba(40,32,20,.06);--sheetshadow:0 -6px 32px rgba(30,24,16,.16);
 --serif:"Literata",Georgia,"Times New Roman",serif;--sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#151618;--card:#1E1F22;--ink:#E9E8E4;--graphite:#9EA2A8;--rule:#313337;--wash:#E9E8E4;--washop:.09;--panel:#25272A;--hover:#2A2C30;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);--sheetshadow:0 -6px 32px rgba(0,0,0,.5)}}
+html{color-scheme:light dark}html[data-theme="light"]{color-scheme:light}html[data-theme="dark"]{color-scheme:dark}
 :root[data-theme="dark"]{--paper:#151618;--card:#1E1F22;--ink:#E9E8E4;--graphite:#9EA2A8;--rule:#313337;--wash:#E9E8E4;--washop:.09;--panel:#25272A;--hover:#2A2C30;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);--sheetshadow:0 -6px 32px rgba(0,0,0,.5)}
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
@@ -29,7 +34,10 @@ button.primary{background:var(--ink);color:var(--card);border-color:var(--ink);f
 @media (hover:hover){button.primary:hover{background:var(--ink);opacity:.9}}
 button.primary.rm{background:none;color:var(--ink);border-color:var(--rule)}
 .page{max-width:1280px;margin:0 auto;padding:0 24px 40px;display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:24px;row-gap:24px;align-items:start}
-.page>header{grid-column:1/-1;padding:36px 0 4px;max-width:78ch}
+.page>header{grid-column:1/-1;padding:36px 0 4px;position:relative}
+.page>header>*:not(.theme){max-width:78ch}
+.theme{position:absolute;top:28px;right:0}
+.theme button{padding:4px 12px;font-size:13px}
 .eyebrow{margin:0 0 8px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--graphite);font-weight:500}
 .lede{margin:0;color:var(--graphite);font-size:15.5px;max-width:68ch}
 .card{background:var(--card);border:1px solid var(--rule);border-radius:20px;padding:22px;box-shadow:var(--shadow);min-width:0}
@@ -169,7 +177,8 @@ input[type=search]{width:100%;font:inherit;font-size:16px;padding:10px 14px;bord
 @media (max-width:980px){.page{grid-template-columns:1fr}.r2l,.r2r,.r3l,.r3r,.r4,.r5{grid-column:1}.mgrid{grid-template-columns:1fr;gap:18px}}
 @media (max-width:600px){
  .page{padding:0 12px 32px;row-gap:14px}
- .page>header{padding:22px 4px 2px}
+ .page>header{padding:62px 4px 2px}
+ .theme{top:14px;right:4px}
  .lede{font-size:14.5px}
  .card{padding:16px;border-radius:18px}
  .wheelcard{padding:6px 4px 14px}
@@ -197,6 +206,7 @@ input[type=search]{width:100%;font:inherit;font-size:16px;padding:10px 14px;bord
 <body>
 <div class="page">
 <header>
+<div class="seg theme" role="group" aria-label="Color theme"><button data-t="auto">Auto</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div>
 <p class="eyebrow">Watercolor palette builder</p>
 <h1>Daniel Smith pigment wheel</h1>
 <p class="lede">Every Daniel Smith Extra Fine watercolor placed by hue angle and chroma, from measured masstone colors (artistpigments.org). Build a palette on the wheel; the wash shows the range of colors it can reach. Your palette and filters are saved in this browser.</p>
@@ -1610,6 +1620,12 @@ function updateMixSheet(){const{ps,w}=sheetCtx,L=mixLab(ps,w.map(v=>v/100)),hex=
   const r=sheet.querySelector(`input[type=range][data-k="${k}"]`);if(r&&+r.value!==w[k])r.value=w[k]});
  drawMark();updateTicks()}
 addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
+// theme: Auto follows the device; Light or Dark is remembered in this browser
+function setTheme(t){const r=document.documentElement;if(t==="auto")delete r.dataset.theme;else r.dataset.theme=t;try{localStorage.setItem("dswheel:theme",t)}catch(e){}
+ const bg=getComputedStyle(r).getPropertyValue("--paper").trim();document.querySelectorAll('meta[name="theme-color"]').forEach(m=>t==="auto"?m.setAttribute("content",m.media.includes("dark")?"#151618":"#F3F1EC"):m.setAttribute("content",bg));
+ document.querySelectorAll(".theme button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t))}
+document.querySelectorAll(".theme button").forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
+setTheme(document.documentElement.dataset.theme||"auto");
 document.getElementById("mixClear").onclick=()=>{st.mix=[];save();renderMix()};
 document.getElementById("mix2btn").onclick=()=>{st.mix3=false;save();renderMix()};
 document.getElementById("mix3btn").onclick=()=>{st.mix3=true;save();renderMix()};

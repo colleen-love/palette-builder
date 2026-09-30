@@ -1,6 +1,8 @@
 // Watercolor Palette Builder
 // Paint data lives in data/paints.json; mixing uses Mixbox (js/mixbox.js).
-fetch("data/paints.json").then(r=>{if(!r.ok)throw new Error(r.status+" "+r.statusText);return r.json()}).then(start).catch(err=>{
+// same ?v= as this script, so new data isn't hidden behind a cached copy
+const ASSET_V=new URL(document.currentScript.src).searchParams.get("v")||"";
+fetch("data/paints.json"+(ASSET_V?"?v="+ASSET_V:"")).then(r=>{if(!r.ok)throw new Error(r.status+" "+r.statusText);return r.json()}).then(start).catch(err=>{
  document.getElementById("info").innerHTML=`<div class="loaderr">Couldn't load the paint data (${String(err.message||err)}). If you opened this file directly, serve the folder instead, e.g. <code>python3 -m http.server</code>.</div>`;
  console.error(err)});
 

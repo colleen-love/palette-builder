@@ -30,3 +30,5 @@ The page loads `data/paints.json` with `fetch`, so opening `index.html` straight
 Reach is the area your palette covers on the a\*b\* plane, traced along the simulated mixing curve between every pair of paints rather than straight lines. Treat it as a guide. Mixes use Mixbox and treat every paint as equally strong. Each paint is a single masstone measurement, and the wheel doesn't show lightness.
 
 Not affiliated with any paint maker. Mixbox and the artistpigments.org data are both licensed for non-commercial use, so keep this project non-commercial.
+
+When you change `css/`, `js/` or `data/`, update the `?v=` value on the three asset links in `index.html` (any new string works). Browsers cache these files, and the new value makes them fetch fresh copies; `app.js` reuses it for `data/paints.json`.

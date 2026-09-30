@@ -17,6 +17,7 @@
 <body data-tab="pigments">
 <header class="top">
 <div class="seg theme" role="group" aria-label="Color theme"><button data-t="auto">Auto</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div>
+<button class="themeBtn" id="themeBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"></svg></button>
 <h1>Watercolor Palette Builder</h1>
 <p class="lede">Select paints on the color wheel and add them to your palette. Once added, mix them together in the Mixing section.</p>
 </header>
@@ -85,12 +86,7 @@
 <div class="plgrid">
 <div class="card"><ul id="pal"></ul></div>
 <div class="side">
-<div class="card addcard">
-<h3>Add any paint</h3>
-<input type="search" id="q" placeholder="Search by name, brand or pigment" aria-label="Search paints" autocomplete="off">
-<ul id="results"></ul>
-</div>
-<div class="card reachcard">
+<div class="card reachcard palreach">
 <h3>Reach</h3>
 <div class="meter"><div class="ml"><span class="big" data-r="pct"></span><span>of the full range across all brands</span></div><div class="track"><div class="fillbar" data-r="pctBar"></div></div></div>
 <div class="meter"><div class="ml"><span class="big" data-r="fpct"></span><span>of the range that meets your filters</span></div><div class="track"><div class="fillbar" data-r="fpctBar"></div></div></div>
@@ -101,6 +97,11 @@
 <h3>Biggest gains</h3>
 <p class="fine" style="margin:0 0 6px">Paints that meet your filters and would push your edge out furthest. Tap one to add it.</p>
 <ul id="gains"></ul>
+</div>
+<div class="card addcard">
+<h3>Add any paint</h3>
+<input type="search" id="q" placeholder="Search by name, brand or pigment" aria-label="Search paints" autocomplete="off">
+<ul id="results"></ul>
 </div>
 </div>
 </div>

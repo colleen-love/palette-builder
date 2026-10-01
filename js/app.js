@@ -494,7 +494,9 @@ const pig0=p=>(p.pig||[""])[0];
 const SLOTS=[{h:97,win:12,maxH:99,skip:/green/i,lean:p=>8*(p.h-88)},{h:80,maxH:85},{h:38},{h:14},
  {h:290,pig:/^PB29$/,bonus:p=>0},
  // a phthalo's dark masstone sits far from 255°, so only ceruleans and teals are held to the hue
- {h:255,pig:/^PB(15|16|17|35|36)\b/,bonus:p=>/^PB15/.test(pig0(p))?25:-hueGap(p.h,255)}];
+ // It also has to look different from the warm blue and lean greener (10° or more): some brands'
+ // phthalo masstone lands right on their ultramarine, which would make the pair one paint.
+ {h:255,pig:/^PB(15|16|17|35|36)\b/,bonus:p=>/^PB15/.test(pig0(p))?25:-hueGap(p.h,255),apart:15}];
 const WHITE={only:p=>/^PW[456]$/.test(pig0(p))&&p.L>85&&!/transparent/i.test(p.n),score:p=>(pig0(p)==="PW6"?20:0)+(/titanium/i.test(p.n)?10:0)+p.L/10};
 const BLACK={only:p=>/^PBk/.test(pig0(p))&&p.L<32&&p.C<10&&!/gr[ae]y/i.test(p.n),score:p=>-p.L};
 const slotsFor=()=>cur.white?[...SLOTS,WHITE,BLACK]:SLOTS;
@@ -508,7 +510,7 @@ function slotScore(p,sl,win){if(effect.test(p.n))return null;
 // the best paint for each slot; null when a slot can't be filled (unless partial)
 function fitSet(ps,win,partial){const out=[];let tot=0;
  for(const sl of slotsFor()){let best=null,bs=-Infinity;
-  for(const p of ps){if(out.includes(p))continue;const sc=slotScore(p,sl,win);if(sc!=null&&sc>bs){bs=sc;best=p}}
+  for(const p of ps){if(out.includes(p)||(sl.apart&&out.some(q=>Math.hypot(p.L-q.L,p.a-q.a,p.b-q.b)<sl.apart||(pig0(q)==="PB29"&&((q.h-p.h+360)%360)<10))))continue;const sc=slotScore(p,sl,win);if(sc!=null&&sc>bs){bs=sc;best=p}}
   if(best){out.push(best);tot+=bs}else if(!partial)return null}
  return{out,tot}}
 // Recommended paints are rated lightfastness I or II, so they last. Mixtures count too (budget lines

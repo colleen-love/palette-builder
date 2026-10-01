@@ -10,7 +10,7 @@ const MEDIA=[
  {key:"watercolor",name:"Watercolor",file:"data/paints.json",about:"Transparent washes, lightened with water",value:["vangogh","davinci"],strong:"a staining paint takes over faster on paper"},
  {key:"gouache",name:"Gouache",file:"data/gouache.json",about:"Opaque, matte and rewettable",value:["winsor-and-newton-designers-gouache"],white:true},
  {key:"oil",name:"Oil",file:"data/oil.json",about:"Slow drying, blends on the canvas",value:["maimeri-classico"],white:true},
- {key:"acrylic",name:"Acrylic",file:"data/acrylic.json",about:"Fast drying and water based",value:["liquitex-basics-acrylics"],white:true}];
+ {key:"acrylic",name:"Acrylic",file:"data/acrylic.json",about:"Fast drying and water based",value:["liquitex-basics-acrylics","vallejo-acrylic-artist-color"],white:true}];
 start();
 
 function start(){
@@ -191,7 +191,7 @@ const valueBrands=()=>(cur.value||[]).filter(k=>BRANDS[k]);
 // one tap narrows the wheel to the medium's good-value brands; tapping again shows every brand
 function quickBrands(){const vb=valueBrands(),box=$("quick");box.hidden=!vb.length;if(!vb.length)return;
  const on=st.f.brand.length===vb.length&&vb.every(k=>st.f.brand.includes(k));
- box.innerHTML=`<button class="chip vchip" aria-pressed="${on}">Good value</button><span class="note">${esc(vb.map(k=>BRANDS[k].short).join(" and "))}: among the least expensive lines in US art stores with lightfast (I or II) paints for every basic color. Prices vary by store and country.</span>`;
+ box.innerHTML=`<button class="chip vchip" aria-pressed="${on}">Good value</button><span class="note">${esc(vb.map(k=>BRANDS[k].short).join(" and "))}: among the least expensive lines sold in the US with lightfast (I or II) paints for every basic color. Prices vary by store and country.</span>`;
  box.querySelector("button").onclick=()=>{st.f.brand=on?[]:[...vb];save();buildChips();render()}}
 $("clearF").onclick=()=>{st.f=clone(DEFF);save();buildChips();syncLight();render()};
 const filterBtn=$("filterBtn"),filtersEl=$("filters");

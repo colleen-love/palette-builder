@@ -19,7 +19,7 @@ const byId=Object.fromEntries(P.map(p=>[p.id,p]));
 const $=id=>document.getElementById(id);
 
 // ---- state ----
-const DEFF={brand:[],lf:[],pig:["any"],trans:[],stain:[],gran:["any"],series:[],avail:["cur"],light:[0,100]};
+const DEFF={brand:[],lf:[],pig:["any"],trans:[],stain:[],gran:["any"],inf:["inc"],series:[],avail:["cur"],light:[0,100]};
 const KEY="wpb:v2";
 const clone=o=>JSON.parse(JSON.stringify(o));
 function load(){const s={sel:[],base:[],mix:[],mix3:false,f:clone(DEFF)};
@@ -27,7 +27,7 @@ function load(){const s={sel:[],base:[],mix:[],mix3:false,f:clone(DEFF)};
  try{const v=JSON.parse(localStorage.getItem(KEY)||"null");
   if(v){s.sel=ids(v.sel);s.base=ids(v.base);s.mix=ids(v.mix);s.mix3=!!v.mix3;
    if(v.f&&typeof v.f==="object")for(const k in DEFF)if(Array.isArray(DEFF[k])&&Array.isArray(v.f[k]))s.f[k]=v.f[k];
-   if(s.f.light.length!==2)s.f.light=[0,100];if(!s.f.pig.length)s.f.pig=["any"];if(!s.f.gran.length)s.f.gran=["any"];if(!s.f.avail.length)s.f.avail=["cur"];
+   if(s.f.light.length!==2)s.f.light=[0,100];if(!s.f.pig.length)s.f.pig=["any"];if(!s.f.gran.length)s.f.gran=["any"];if(!s.f.inf.length)s.f.inf=["inc"];if(!s.f.avail.length)s.f.avail=["cur"];
    return s}
   // earlier versions stored a single-brand palette by paint name
   const old=JSON.parse(localStorage.getItem("dswheel:public:v1")||"null");
@@ -37,6 +37,10 @@ function load(){const s={sel:[],base:[],mix:[],mix3:false,f:clone(DEFF)};
 let st=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
 const inPal=p=>st.sel.includes(p.id);
+// Staining and granulation filled in from the pigment (see tools/infer_properties.py) are
+// inferred, not the maker's claim. "Brand-stated only" treats them as unknown.
+const inferred=(p,k)=>p[k+"Src"]==="pigment"||p[k+"Src"]==="family";
+const known=(p,k)=>!!p[k]&&(st.f.inf[0]==="inc"||!inferred(p,k));
 
 // why a paint fails the filters (empty array = passes)
 // A paint with no data for a filter you have set is left out: unknown is not a match.
@@ -45,8 +49,8 @@ function fails(p){const f=st.f,w=[];
  if(f.lf.length){if(!p.lf){w.push("no lightfastness data")}else if(!f.lf.includes(String(p.lf)))w.push("lightfastness "+ROMAN[p.lf])}
  if(f.pig[0]==="single"){if(p.single===false)w.push("mixture");else if(p.single==null)w.push("no pigment data")}
  if(f.trans.length){if(!p.trans){w.push("no transparency data")}else if(!f.trans.includes(p.trans))w.push(TNAME[p.trans].toLowerCase())}
- if(f.stain.length){if(!p.stain){w.push("no staining data")}else if(!f.stain.includes(String(p.stain)))w.push(SNAME[p.stain].toLowerCase())}
- const g=f.gran[0];if(g!=="any"){if(!p.gran){w.push("no granulation data")}else if(p.gran!==g)w.push(p.gran==="G"?"granulating":"smooth")}
+ if(f.stain.length){if(!known(p,"stain")){w.push(p.stain?"no brand staining data":"no staining data")}else if(!f.stain.includes(String(p.stain)))w.push(SNAME[p.stain].toLowerCase())}
+ const g=f.gran[0];if(g!=="any"){if(!known(p,"gran")){w.push(p.gran?"no brand granulation data":"no granulation data")}else if(p.gran!==g)w.push(p.gran==="G"?"granulating":"smooth")}
  if(f.series.length){if(!p.series){w.push("no series data")}else if(!f.series.includes(p.series))w.push("series "+p.series)}
  if(f.avail[0]==="cur"&&p.disc)w.push("discontinued");
  if(p.L<f.light[0]||p.L>f.light[1])w.push("lightness "+p.L);
@@ -81,13 +85,20 @@ function svgPt(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;r
 const unitsPerPx=svg=>248/svg.getBoundingClientRect().width;
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
 const lfTxt=p=>p.lfRaw?`Lightfastness ${p.lfRaw}${p.lfRaw.startsWith("ASTM")||ROMAN[p.lfRaw]?"":` (≈ ${ROMAN[p.lf]})`}`:"Lightfastness not listed";
-const propsOf=p=>[p.single===true?"Single pigment":p.single===false?"Mixture":null,lfTxt(p),p.trans?TNAME[p.trans]:null,p.stain?SNAME[p.stain]:null,p.gran?(p.gran==="G"?"Granulating":"Non-granulating"):null,p.series?"Series "+p.series:null,p.disc?"Discontinued":null].filter(Boolean).join(" · ");
+// filled dot: the maker's rating; hollow dot: inferred from the pigment
+const mark=(p,k,txt)=>!p[k]?null:`${inferred(p,k)?"○":"●"}\u2009${txt}`;
+const propsOf=p=>[p.single===true?"Single pigment":p.single===false?"Mixture":null,lfTxt(p),p.trans?TNAME[p.trans]:null,mark(p,"stain",SNAME[p.stain]),mark(p,"gran",p.gran==="G"?"Granulating":"Non-granulating"),p.series?"Series "+p.series:null,p.disc?"Discontinued":null].filter(Boolean).join(" · ");
+const SRCWHY={pigment:"how other brands rate the same pigment",family:"its pigment family"};
+// one line saying which values are guesses, and which ones the brands disagree on
+function infNote(p){const g=[],u=[];
+ [["stain","staining"],["gran","granulation"]].forEach(([k,l])=>{if(inferred(p,k))g.push(`${l} from ${SRCWHY[p[k+"Src"]]}`);else if(p[k+"Src"]==="uncertain")u.push(l)});
+ return[g.length?`○ Inferred, not stated by ${p.bs}: ${g.join("; ")}.`:"",u.length?`${u.join(" and ")[0].toUpperCase()+u.join(" and ").slice(1)} unknown: brands rate ${p.pig&&p.pig.length>1?"these pigments":"this pigment"} differently.`:""].filter(Boolean).join(" ")}
 const makerTxt=p=>[p.bs,p.pig&&p.pig.join(", ")].filter(Boolean).join(" · ");
 const numsOf=p=>`Hue ${p.h.toFixed(1)}°, chroma ${p.C.toFixed(1)}, lightness ${p.L}`;
 const srcNote=p=>p.src==="maker"?"Color from the manufacturer's published values, not yet measured.":p.src==="chart"?"Color measured from a printed color chart.":"";
 const EXT='<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>';
 const extLink=p=>`<a class="ext" href="${esc(p.url||BRANDS[p.brand].url)}" target="_blank" rel="noopener" title="View on artistpigments.org" aria-label="View ${esc(p.n)} on artistpigments.org (opens in a new tab)">${EXT}</a>`;
-function describe(p){const w=fails(p),s=srcNote(p);return `<b>${esc(p.n)}</b> ${extLink(p)} <span class="brandnote">${esc(makerTxt(p))}</span>${inPal(p)?" · in your palette":""}<br>${numsOf(p)}<br>${propsOf(p)}${s?"<br>"+s:""}${w.length?`<br>Outside your filters: ${w.join(", ")}`:""}`}
+function describe(p){const w=fails(p),s=srcNote(p),n=infNote(p);return `<b>${esc(p.n)}</b> ${extLink(p)} <span class="brandnote">${esc(makerTxt(p))}</span>${inPal(p)?" · in your palette":""}<br>${numsOf(p)}<br>${propsOf(p)}${n?`<br><span class="note">${n}</span>`:""}${s?"<br>"+s:""}${w.length?`<br>Outside your filters: ${w.join(", ")}`:""}`}
 const DEFAULT_INFO=()=>noHover.matches?"Tap near a dot to see its details and add it to your palette.":"Hover a dot for its details. Click it to add it to your palette.";
 function toggle(id,rect){const i=st.sel.indexOf(id);if(i>=0){st.sel.splice(i,1);st.mix=st.mix.filter(m=>m!==id)}else{st.sel.push(id);toast("Paint added",rect)}save();render()}
 const wheel=$("wheel"),allg=$("allg"),focusg=$("focusg");
@@ -130,6 +141,7 @@ function groups(){const inBrands=P.filter(p=>!st.f.brand.length||st.f.brand.incl
   trans:[["T","Transparent"],["ST","Semi-transparent"],["SO","Semi-opaque"],["O","Opaque"]],
   stain:[["1","Non"],["2","Semi"],["3","Staining"]],
   gran:[["any","Any"],["G","Granulating"],["N","Smooth"]],
+  inf:[["inc","Include inferred"],["exc","Brand-stated only"]],
   series:[...new Set(inBrands.map(p=>p.series).filter(Boolean))].sort(seriesSort).map(s=>[s,s]),
   avail:[["cur","In production"],["any","Include discontinued"]]}}
 function buildChips(){const G=groups();
@@ -140,7 +152,7 @@ function buildChips(){const G=groups();
    const on=many?(v==="__any"?st.f[key].length===0:st.f[key].includes(v)):st.f[key][0]===v;b.setAttribute("aria-pressed",on);
    b.onclick=()=>{if(many){if(v==="__any")st.f[key]=[];else{const i=st.f[key].indexOf(v);if(i>=0)st.f[key].splice(i,1);else st.f[key].push(v);if(st.f[key].length===G[key].length)st.f[key]=[]}}else st.f[key]=[v];save();buildChips();render()};
    box.appendChild(b)})});
- const n=["brand","lf","trans","stain","series"].filter(k=>st.f[k].length).length+(st.f.pig[0]!=="any")+(st.f.gran[0]!=="any")+(st.f.avail[0]!=="cur")+(st.f.light[0]!==0||st.f.light[1]!==100);
+ const n=["brand","lf","trans","stain","series"].filter(k=>st.f[k].length).length+(st.f.pig[0]!=="any")+(st.f.gran[0]!=="any")+(st.f.inf[0]!=="inc")+(st.f.avail[0]!=="cur")+(st.f.light[0]!==0||st.f.light[1]!==100);
  $("fBadge").textContent=n;$("fBadge").hidden=!n}
 $("clearF").onclick=()=>{st.f=clone(DEFF);save();buildChips();syncLight();render()};
 const filterBtn=$("filterBtn"),filtersEl=$("filters");
@@ -220,8 +232,10 @@ function render(){
  // many brands don't publish staining or granulation: say so while those filters are on
  const inBrands=P.filter(p=>!st.f.brand.length||st.f.brand.includes(p.brand));
  [["stain","staining",st.f.stain.length>0],["gran","granulation",st.f.gran[0]!=="any"]].forEach(([k,label,on])=>{const n=document.querySelector(`.fwarn[data-note="${k}"]`);n.hidden=!on;if(!on)return;
-  const miss=inBrands.filter(p=>!p[k]),by=[...new Set(miss.map(p=>p.bs))];
-  n.textContent=miss.length?`Many paint makers don't publish ${label}. ${miss.length} of ${inBrands.length} paints${st.f.brand.length?" from the brands you chose":""} have none on record${by.length<=3?` (${by.join(", ")})`:""}, so this filter leaves them out.`:`Every paint${st.f.brand.length?" from the brands you chose":""} has ${label} data.`});
+  const miss=inBrands.filter(p=>!known(p,k)),by=[...new Set(miss.map(p=>p.bs))],guess=inBrands.filter(p=>p[k]&&inferred(p,k)).length,inc=st.f.inf[0]==="inc";
+  const from=st.f.brand.length?" from the brands you chose":"";
+  n.textContent=(guess?(inc?`${guess} values are inferred from the pigment (hollow dot in the details), not stated by the brand. `:`${guess} values inferred from the pigment are left out. `):"")+
+   (miss.length?`${miss.length} of ${inBrands.length} paints${from} have ${inc?"no value, even inferred":"no brand-stated value"}${by.length<=3?` (${by.join(", ")})`:""}, so this filter leaves them out.`:`Every paint${from} has ${label} data.`)});
  const noData=P.filter(p=>{const w=fails(p);return w.length&&w.every(r=>r.startsWith("no "))}).length;
  const cnt=`${pool.length} of ${P.length} paints match.`+(noData?` ${noData} more have no data for a filter you set.`:"");$("fcount").textContent=cnt;$("fcountTop").textContent=cnt;
  const d=bA?((A-bA)/bA*100):0;const dt=bA?(Math.abs(d)<0.05?"Same reach as your stored palette.":`${d>0?"+":""}${d.toFixed(1)}% compared with your stored palette.`):"";R("delta",e=>e.textContent=dt);
@@ -270,8 +284,8 @@ function renderMix(){
  if(!st.sel.length)box.innerHTML='<li class="fine">Your palette is empty. Add paints in Pigments first.</li>';
  st.sel.map(id=>byId[id]).sort(hueSort).forEach(p=>{const on=st.mix.includes(p.id),li=document.createElement("li"),b=document.createElement("button");
   b.className="pchip";b.setAttribute("aria-pressed",on);b.disabled=full&&!on;
-  b.setAttribute("aria-label",`${p.n}, ${p.bs}${p.gran==="G"?", granulating":""}`);b.title=p.n;
-  b.innerHTML=`<span class="sw" style="background:${p.rgb}"><svg class="ck" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span><span class="pt" aria-hidden="true"><span class="pn">${esc(p.n)}</span><span class="gr">${esc(p.bs)}${p.gran==="G"?" · Gran.":""}</span></span>`;
+  b.setAttribute("aria-label",`${p.n}, ${p.bs}${p.gran==="G"?(inferred(p,"gran")?", granulating (inferred)":", granulating"):""}`);b.title=p.n;
+  b.innerHTML=`<span class="sw" style="background:${p.rgb}"><svg class="ck" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span><span class="pt" aria-hidden="true"><span class="pn">${esc(p.n)}</span><span class="gr">${esc(p.bs)}${p.gran==="G"?(inferred(p,"gran")?" · ○ Gran.":" · Gran."):""}</span></span>`;
   b.onclick=()=>{if(on)st.mix=st.mix.filter(m=>m!==p.id);else st.mix.push(p.id);save();renderMix()};li.appendChild(b);box.appendChild(li)});
  if(st.mix3||!st.mix.includes(mixFocus))mixFocus=null;
  const ms=st.mix.map(id=>byId[id]).sort(hueSort),bars=$("bars");bars.innerHTML="";
@@ -369,7 +383,7 @@ function keepVisible(y){if(!phone.matches){document.body.style.paddingBottom="";
 function drawSheet(){const c=sheetCtx;sheet.hidden=false;
  if(c.kind==="paint"){const p=c.p,has=inPal(p),w=fails(p),s=srcNote(p);
   sheet.innerHTML=`<div class="sh-head"><span class="sh-sw" style="background:${p.rgb}"></span><div class="sh-t"><h3 id="sheetTitle">${esc(p.n)} ${extLink(p)}</h3><p class="note">${esc(makerTxt(p))}<br>${numsOf(p)}</p></div>${closeBtn}</div>
-<p class="sh-props">${propsOf(p)}${s?"<br>"+s:""}</p>${w.length?`<p class="sh-warn">Outside your filters: ${w.join(", ")}</p>`:""}
+<p class="sh-props">${propsOf(p)}${infNote(p)?"<br>"+infNote(p):""}${s?"<br>"+s:""}</p>${w.length?`<p class="sh-warn">Outside your filters: ${w.join(", ")}</p>`:""}
 <button class="primary${has?" rm":""}" data-act="toggle">${has?"Remove from palette":"Add to palette"}</button>
 ${c.near.length?`<div class="sh-near"><span class="flabel">Also near your tap</span><div class="chips">${c.near.map((q,i)=>`<button class="chip" data-i="${i}" aria-label="${esc(q.n+", "+q.bs)}"><span class="sw" style="background:${q.rgb}"></span>${esc(q.n)}</button>`).join("")}</div></div>`:""}`;
   const tb=sheet.querySelector("[data-act=toggle]");tb.onclick=()=>{toggle(p.id,tb.getBoundingClientRect());drawSheet()};
@@ -379,7 +393,7 @@ ${c.near.length?`<div class="sh-near"><span class="flabel">Also near your tap</s
 <div class="ratio" id="mixBar">${ps.map(p=>`<span style="background:${p.rgb}"></span>`).join("")}</div>
 <div class="rec">${ps.map((p,k)=>`<span class="sw" style="background:${p.rgb}"></span><span class="nm">${esc(nameIn(p,ps))} <span class="note" id="pp${k}"></span></span><span class="pc" id="pc${k}"></span>${ps.length===3?`<input type="range" min="0" max="100" step="5" data-k="${k}" aria-label="Share of ${esc(p.n)}">`:""}`).join("")}</div>
 ${ps.length===2?`<div class="two"><span class="sw" style="background:${ps[0].rgb}"></span><input type="range" min="0" max="100" step="5" data-k="1" aria-label="Share of ${esc(ps[1].n)}"><span class="sw" style="background:${ps[1].rgb}"></span></div>`:""}
-<p class="fine" style="margin:0">${gran.length?`${esc(gran.map(p=>p.n).join(" and "))} granulate${gran.length===1?"s":""}, so expect texture. `:""}Drag to adjust. Assumes equal strength, so a staining paint takes over faster on paper.</p>`;
+<p class="fine" style="margin:0">${gran.length?`${esc(gran.map(p=>p.n+(inferred(p,"gran")?" (inferred)":"")).join(" and "))} granulate${gran.length===1?"s":""}, so expect texture. `:""}Drag to adjust. Assumes equal strength, so a staining paint takes over faster on paper.</p>`;
   sheet.querySelectorAll("input[type=range]").forEach(r=>r.addEventListener("input",()=>setShare(+r.dataset.k,+r.value)));
   updateMixSheet()}
  sheet.querySelector(".sh-close").onclick=closeSheet}

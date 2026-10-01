@@ -215,6 +215,11 @@ function render(){
  const fv=fA?Math.min(100,Math.round(sA/fA*100)):0;R("fpct",e=>e.textContent=fA?fv+"%":"–");R("fpctBar",e=>e.style.width=fv+"%");
  const fn=out?`${out} of your paints ${out===1?"is":"are"} outside your filters and not counted here.`:"";R("fnote",e=>e.textContent=fn);
  // say how many were dropped only for lack of data, so a short list is explainable
+ // many brands don't publish staining or granulation: say so while those filters are on
+ const inBrands=P.filter(p=>!st.f.brand.length||st.f.brand.includes(p.brand));
+ [["stain","staining",st.f.stain.length>0],["gran","granulation",st.f.gran[0]!=="any"]].forEach(([k,label,on])=>{const n=document.querySelector(`.fwarn[data-note="${k}"]`);n.hidden=!on;if(!on)return;
+  const miss=inBrands.filter(p=>!p[k]),by=[...new Set(miss.map(p=>p.bs))];
+  n.textContent=miss.length?`Many paint makers don't publish ${label}. ${miss.length} of ${inBrands.length} paints${st.f.brand.length?" from the brands you chose":""} have none on record${by.length<=3?` (${by.join(", ")})`:""}, so this filter leaves them out.`:`Every paint${st.f.brand.length?" from the brands you chose":""} has ${label} data.`});
  const noData=P.filter(p=>{const w=fails(p);return w.length&&w.every(r=>r.startsWith("no "))}).length;
  const cnt=`${pool.length} of ${P.length} paints match.`+(noData?` ${noData} more have no data for a filter you set.`:"");$("fcount").textContent=cnt;$("fcountTop").textContent=cnt;
  const d=bA?((A-bA)/bA*100):0;const dt=bA?(Math.abs(d)<0.05?"Same reach as your stored palette.":`${d>0?"+":""}${d.toFixed(1)}% compared with your stored palette.`):"";R("delta",e=>e.textContent=dt);

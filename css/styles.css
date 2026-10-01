@@ -307,3 +307,9 @@ body.nodata .view{display:none!important}
 @media (max-width:600px){.ob{padding:20px 16px}.obgrid{grid-template-columns:1fr}.obgrid:not(.two) .obcard{min-height:0;flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:10px}.obgrid:not(.two) .obcard .note{flex-basis:100%}.obgrid:not(.two) .obcard .mdot{margin:0}}
 /* phones: the medium pill sits on its own row at the top, level with the theme button, on every section */
 @media (max-width:759px){.titlerow{flex-direction:column-reverse;align-items:flex-start;gap:10px}.mmenu{position:fixed;left:12px;right:12px;top:60px;width:auto;max-width:none}}
+/* "Good value" shortcut above the brand chips */
+.brandbox{min-width:0}
+.quick{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:0 0 10px;padding:10px;border-radius:12px;background:var(--panel)}
+.quick[hidden]{display:none}
+.quick .note{line-height:1.4}
+.vchip{flex:none;background:var(--card);border-color:var(--rule);font-weight:500}

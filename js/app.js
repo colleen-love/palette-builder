@@ -3,11 +3,13 @@
 // same ?v= as this script, so new data isn't hidden behind a cached copy
 const ASSET_V=new URL(document.currentScript.src).searchParams.get("v")||"";
 // A medium whose file isn't there yet (404) shows a "coming soon" note instead of the wheel.
+// value: brands for someone who doesn't know brands yet: lower-priced lines whose paints are mostly
+// lightfast (I-II) and cover a good range. Price isn't in the data, so this is a judgment call.
 const MEDIA=[
- {key:"watercolor",name:"Watercolor",file:"data/paints.json",about:"Transparent washes, lightened with water",strong:"a staining paint takes over faster on paper"},
- {key:"gouache",name:"Gouache",file:"data/gouache.json",about:"Opaque, matte and rewettable",white:true},
- {key:"oil",name:"Oil",file:"data/oil.json",about:"Slow drying, blends on the canvas",white:true},
- {key:"acrylic",name:"Acrylic",file:"data/acrylic.json",about:"Fast drying and water based",white:true}];
+ {key:"watercolor",name:"Watercolor",file:"data/paints.json",about:"Transparent washes, lightened with water",value:["vangogh","davinci"],strong:"a staining paint takes over faster on paper"},
+ {key:"gouache",name:"Gouache",file:"data/gouache.json",about:"Opaque, matte and rewettable",value:["rosa-gallery-professional-gouache-colours","da-vinci-permanent-artists-gouache"],white:true},
+ {key:"oil",name:"Oil",file:"data/oil.json",about:"Slow drying, blends on the canvas",value:["maimeri-classico","renesans-oils-for-art"],white:true},
+ {key:"acrylic",name:"Acrylic",file:"data/acrylic.json",about:"Fast drying and water based",value:["liquitex-basics-acrylics","vallejo-acrylic-studio"],white:true}];
 start();
 
 function start(){
@@ -183,7 +185,13 @@ function buildChips(){const G=groups();
    b.onclick=()=>{if(many){if(v==="__any")st.f[key]=[];else{const i=st.f[key].indexOf(v);if(i>=0)st.f[key].splice(i,1);else st.f[key].push(v);if(st.f[key].length===G[key].length)st.f[key]=[]}}else st.f[key]=[v];save();buildChips();render()};
    box.appendChild(b)})});
  const n=["brand","lf","trans","stain","dry","series"].filter(k=>st.f[k].length).length+(st.f.pig[0]!=="any")+(st.f.gran[0]!=="any")+(st.f.inf[0]!=="inc")+(st.f.avail[0]!=="cur")+(st.f.light[0]!==0||st.f.light[1]!==100);
- $("fBadge").textContent=n;$("fBadge").hidden=!n}
+ $("fBadge").textContent=n;$("fBadge").hidden=!n;quickBrands()}
+const valueBrands=()=>(cur.value||[]).filter(k=>BRANDS[k]);
+// one tap narrows the wheel to the medium's good-value brands; tapping again shows every brand
+function quickBrands(){const vb=valueBrands(),box=$("quick");box.hidden=!vb.length;if(!vb.length)return;
+ const on=st.f.brand.length===vb.length&&vb.every(k=>st.f.brand.includes(k));
+ box.innerHTML=`<button class="chip vchip" aria-pressed="${on}">Good value</button><span class="note">${esc(vb.map(k=>BRANDS[k].short).join(" and "))}: lower-priced lines with mostly lightfast colors, a good place to start. Prices vary by country.</span>`;
+ box.querySelector("button").onclick=()=>{st.f.brand=on?[]:[...vb];save();buildChips();render()}}
 $("clearF").onclick=()=>{st.f=clone(DEFF);save();buildChips();syncLight();render()};
 const filterBtn=$("filterBtn"),filtersEl=$("filters");
 filterBtn.onclick=()=>{const open=!filtersEl.classList.contains("open");filtersEl.classList.toggle("open",open);filterBtn.setAttribute("aria-expanded",open)};
@@ -473,16 +481,20 @@ const _render=render;render=function(){_render();renderMix()};
 const STARTER=[97,80,38,14,290,255];
 const hueGap=(a,b)=>Math.abs(((a-b)%360+540)%360-180);
 // a mix with white is a tint, not a primary to mix from
+// and fluorescents, metallics and the like are bright but aren't primaries (fluorescents fade)
+const effect=/fluor|neon|metallic|iridescent|pearl|glitter|interference/i;
 const tinted=p=>(p.pig||[]).length>1&&p.pig.some(c=>/^PW/.test(c));
 // the most chromatic paint near each target hue, favoring single pigments and good lightfastness
 function fitSet(ps,win,partial){const out=[];let tot=0;
  for(const h of STARTER){let best=null,bs=-Infinity;
-  for(const p of ps){if(out.includes(p))continue;const d=hueGap(p.h,h);if(d>win)continue;const sc=p.C-2.5*d+(p.single?8:0)-(p.lf>2?40:0)-(tinted(p)?30:0);if(sc>bs){bs=sc;best=p}}
+  for(const p of ps){if(out.includes(p))continue;const d=hueGap(p.h,h);if(d>win)continue;if(effect.test(p.n))continue;const sc=p.C-2.5*d+(p.single?15:0)-(p.lf>2?40:!p.lf?10:0)-(tinted(p)?30:0);if(sc>bs){bs=sc;best=p}}
   if(best){out.push(best);tot+=bs}else if(!partial)return null}
  return{out,tot}}
 // one brand's set when a brand covers all six well, otherwise the best across brands
 function starterSet(){const inProd=P.filter(p=>!p.disc),ok=inProd.filter(passes),pool=ok.length>=6?ok:inProd;
- let best=null;for(const b of DATA.brands){const r=fitSet(pool.filter(p=>p.brand===b.key),14);if(r&&(!best||r.tot>best.tot))best=r}
+ const bestOf=keys=>{let best=null;for(const k of keys){const r=fitSet(pool.filter(p=>p.brand===k),14);if(r&&(!best||r.tot>best.tot))best=r}return best};
+ // a good-value brand first, so a first palette doesn't start with the priciest paints
+ const best=bestOf(valueBrands())||bestOf(DATA.brands.map(b=>b.key));
  return(best||fitSet(pool,14)||fitSet(pool,30,true)).out}
 function addStarter(rect){const add=starterSet().filter(p=>!inPal(p));add.forEach(p=>st.sel.push(p.id));save();render();
  toast(add.length?`Added ${add.length} paint${add.length===1?"":"s"}`:"Those paints are already in your palette",rect,2200)}

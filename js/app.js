@@ -4,12 +4,12 @@
 const ASSET_V=new URL(document.currentScript.src).searchParams.get("v")||"";
 // A medium whose file isn't there yet (404) shows a "coming soon" note instead of the wheel.
 // value: brands for someone who doesn't know brands yet: the least expensive lines sold by US art
-// retailers that can supply the whole basic set in single-pigment, lightfast (I) paints.
+// retailers that can supply the whole basic set in paints rated lightfast I or II.
 // Price and availability aren't in the data; they were checked against US retailers in October 2026.
 const MEDIA=[
  {key:"watercolor",name:"Watercolor",file:"data/paints.json",about:"Transparent washes, lightened with water",value:["vangogh","davinci"],strong:"a staining paint takes over faster on paper"},
  {key:"gouache",name:"Gouache",file:"data/gouache.json",about:"Opaque, matte and rewettable",value:["winsor-and-newton-designers-gouache"],white:true},
- {key:"oil",name:"Oil",file:"data/oil.json",about:"Slow drying, blends on the canvas",value:["golden-williamsburg"],white:true},
+ {key:"oil",name:"Oil",file:"data/oil.json",about:"Slow drying, blends on the canvas",value:["maimeri-classico"],white:true},
  {key:"acrylic",name:"Acrylic",file:"data/acrylic.json",about:"Fast drying and water based",value:["liquitex-basics-acrylics"],white:true}];
 start();
 
@@ -191,7 +191,7 @@ const valueBrands=()=>(cur.value||[]).filter(k=>BRANDS[k]);
 // one tap narrows the wheel to the medium's good-value brands; tapping again shows every brand
 function quickBrands(){const vb=valueBrands(),box=$("quick");box.hidden=!vb.length;if(!vb.length)return;
  const on=st.f.brand.length===vb.length&&vb.every(k=>st.f.brand.includes(k));
- box.innerHTML=`<button class="chip vchip" aria-pressed="${on}">Good value</button><span class="note">${esc(vb.map(k=>BRANDS[k].short).join(" and "))}: among the least expensive lines in US art stores with single-pigment, lightfast (I) paints for every basic color. Prices vary by store and country.</span>`;
+ box.innerHTML=`<button class="chip vchip" aria-pressed="${on}">Good value</button><span class="note">${esc(vb.map(k=>BRANDS[k].short).join(" and "))}: among the least expensive lines in US art stores with lightfast (I or II) paints for every basic color. Prices vary by store and country.</span>`;
  box.querySelector("button").onclick=()=>{st.f.brand=on?[]:[...vb];save();buildChips();render()}}
 $("clearF").onclick=()=>{st.f=clone(DEFF);save();buildChips();syncLight();render()};
 const filterBtn=$("filterBtn"),filtersEl=$("filters");
@@ -285,7 +285,7 @@ function render(){
  gains.forEach(o=>gu.appendChild(addRow(o.p,"",`+${o.g.toFixed(1)}%`,r=>paintAdded(r))));
  const pu=$("pal");pu.innerHTML="";
  [...sel].sort(hueSort).forEach(p=>{const parts=[];if(A){const loss=(M.loss??={})[p.id]??=(A-envArea(envOf(sel.filter(q=>q!==p))))/A*100;if(loss>=0.1)parts.push(`Sets the edge · removing it loses ${loss.toFixed(1)}%`)}const w=fails(p);if(w.length)parts.push("Outside your filters: "+w.join(", "));pu.appendChild(palRow(p,parts.join("<br>")))});
- if(!sel.length){pu.innerHTML=`<li class="fine startli">Your ${cur.name.toLowerCase()} palette is empty. Add paints from the wheel or the search in Pigments, or start with a basic set: a warm and a cool of each primary${cur.white?", plus white and black":""}, single-pigment and lightfast where the brands allow.<br><button class="starter">Add a basic set</button></li>`;
+ if(!sel.length){pu.innerHTML=`<li class="fine startli">Your ${cur.name.toLowerCase()} palette is empty. Add paints from the wheel or the search in Pigments, or start with a basic set: a warm and a cool of each primary${cur.white?", plus white and black":""}, rated lightfast where the brands allow.<br><button class="starter">Add a basic set</button></li>`;
   pu.querySelector(".starter").onclick=e=>addStarter(e.currentTarget.getBoundingClientRect())}
  search();drawFocus()}
 const q=$("q"),res=$("results");
@@ -489,7 +489,9 @@ const pig0=p=>(p.pig||[""])[0];
 // shows its greener side in tints: ultramarine (PB29) is the warm blue, phthalo (PB15) or a
 // cerulean or cobalt teal (PB35, PB36) the cool one. Each falls back to hue if the brand has none.
 // White is titanium (or zinc, never lead) and black a true black, not a grey.
-const SLOTS=[{h:97},{h:80},{h:38},{h:14},
+// The cool yellow is the greenest bright yellow a brand has (some have no true lemon), and the warm
+// one has to sit clearly on the orange side, so the pair is a real split.
+const SLOTS=[{h:97,win:12,maxH:99,skip:/green/i,lean:p=>8*(p.h-88)},{h:80,maxH:85},{h:38},{h:14},
  {h:290,pig:/^PB29$/,bonus:p=>0},
  // a phthalo's dark masstone sits far from 255°, so only ceruleans and teals are held to the hue
  {h:255,pig:/^PB(15|16|17|35|36)\b/,bonus:p=>/^PB15/.test(pig0(p))?25:-hueGap(p.h,255)}];
@@ -499,17 +501,20 @@ const slotsFor=()=>cur.white?[...SLOTS,WHITE,BLACK]:SLOTS;
 const base=p=>(p.single?15:0)-(p.lf>2?40:p.lf===2?5:!p.lf?10:0)-(tinted(p)?30:0)-(/\bhue\b/i.test(p.n)?10:0);
 function slotScore(p,sl,win){if(effect.test(p.n))return null;
  if(sl.only)return sl.only(p)?sl.score(p)+base(p):null;
- if(sl.pig&&sl.pig.test(pig0(p))&&p.C>=20)return 100+p.C+sl.bonus(p)+base(p);
- const d=hueGap(p.h,sl.h);return d>win||p.C<30?null:p.C-2.5*d+base(p)}
+ // a blue by pigment still has to look blue: a mixture can list phthalo first and be a magenta
+ if(sl.pig&&sl.pig.test(pig0(p))&&p.C>=20&&hueGap(p.h,265)<=55)return 100+p.C+sl.bonus(p)+base(p);
+ const d=hueGap(p.h,sl.h);if(d>(sl.win||win)||p.C<30||(sl.maxH&&p.h>sl.maxH)||(sl.skip&&sl.skip.test(p.n)))return null;
+ return p.C+(sl.lean?sl.lean(p):-2.5*d)+base(p)}
 // the best paint for each slot; null when a slot can't be filled (unless partial)
 function fitSet(ps,win,partial){const out=[];let tot=0;
  for(const sl of slotsFor()){let best=null,bs=-Infinity;
   for(const p of ps){if(out.includes(p))continue;const sc=slotScore(p,sl,win);if(sc!=null&&sc>bs){bs=sc;best=p}}
   if(best){out.push(best);tot+=bs}else if(!partial)return null}
  return{out,tot}}
-// Recommended paints are single pigments rated lightfastness I or II: they mix cleanly and last.
-// (Some brands rate phthalo blue PB15 II, as ASTM does in watercolor.) I wins a close call.
-const sound=p=>p.single===true&&(p.lf===1||p.lf===2);
+// Recommended paints are rated lightfastness I or II, so they last. Mixtures count too (budget lines
+// rely on them), but single pigments, I over II and true pigment names win close calls, and tints
+// (mixes with white) rarely qualify. Some brands rate phthalo blue PB15 II, as ASTM does in watercolor.
+const sound=p=>p.lf===1||p.lf===2;
 // Sound paints first, from as few and as affordable brands as possible: one good-value brand,
 // then the medium's good-value brands together, then any one brand, then any brands. Only when no
 // sound set exists does it fall back to the best paints available.
@@ -601,7 +606,7 @@ function obStep2(){const keys=MEDIA.map(m=>m.key).filter(k=>obPick.includes(k)),
    ob.insertAdjacentHTML("beforeend",'<div class="obfoot"><span></span><button class="primary" data-act="done">Got it</button></div>');ob.querySelector("[data-act=done]").onclick=()=>finish(false);return}
   const set=starterSet(),has=st.sel.length>0,brands=[...new Set(set.map(p=>p.bs))];
   ob.querySelector(".obsub").textContent=(has?`You already have ${st.sel.length} paint${st.sel.length===1?"":"s"} here. Add a basic set, or keep your palette as it is.`:"How would you like to start?")+more;
-  ob.insertAdjacentHTML("beforeend",`<div class="obgrid two"><button class="obcard" data-act="set"><span class="obsw" role="img" aria-label="${esc(set.map(p=>p.n).join(", "))}">${set.map(p=>`<span style="background:${p.rgb}" title="${esc(p.n)}"></span>`).join("")}</span><b>${has?"Add":"Start with"} a basic set</b><span class="note">A warm and a cool of each primary${cur.white?", plus white and black,":","} so you can mix most colors right away${set.sound?`. Each is a single pigment rated lightfast (${set.every(p=>p.lf===1)?"I":"I or II"})`:""}${brands.length===1?`, all from ${esc(brands[0])}`:""}.</span></button>
+  ob.insertAdjacentHTML("beforeend",`<div class="obgrid two"><button class="obcard" data-act="set"><span class="obsw" role="img" aria-label="${esc(set.map(p=>p.n).join(", "))}">${set.map(p=>`<span style="background:${p.rgb}" title="${esc(p.n)}"></span>`).join("")}</span><b>${has?"Add":"Start with"} a basic set</b><span class="note">A warm and a cool of each primary${cur.white?", plus white and black,":","} so you can mix most colors right away${set.sound?`. Each is rated lightfast (${set.every(p=>p.lf===1)?"I":"I or II"})${set.every(p=>p.single)?" and a single pigment":""}`:""}${brands.length===1?`, all from ${esc(brands[0])}`:""}.</span></button>
 <button class="obcard" data-act="empty"><span class="obsw empty" aria-hidden="true"></span><b>${has?"Keep my palette":"Start empty"}</b><span class="note">${has?"Leave your paints as they are.":"Pick paints yourself on the color wheel."}</span></button></div>`);
   ob.querySelector("[data-act=set]").onclick=()=>finish(true);ob.querySelector("[data-act=empty]").onclick=()=>finish(false)})}
 function finish(withSet){S.onboarded=true;S.news=false;S.shown=MEDIA.map(m=>m.key).filter(k=>obKeys.includes(k)||k===cur.key);ob.close();setTab("pigments");history.replaceState(null,"",location.pathname+location.search+"#pigments");

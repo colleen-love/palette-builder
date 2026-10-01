@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
 <!-- bump ?v= when these files change so browsers fetch fresh copies -->
-<link rel="stylesheet" href="css/styles.css?v=59d288f">
+<link rel="stylesheet" href="css/styles.css?v=infer2">
 </head>
 <body data-tab="pigments">
 <header class="top">
@@ -45,6 +45,7 @@
 <div class="fgroup"><span class="flabel">Transparency</span><div class="chips" data-key="trans" data-mode="many"></div></div>
 <div class="fgroup"><span class="flabel">Staining</span><div class="chips" data-key="stain" data-mode="many"></div><p class="fwarn" data-note="stain" hidden></p></div>
 <div class="fgroup"><span class="flabel">Granulation</span><div class="chips" data-key="gran" data-mode="one"></div><p class="fwarn" data-note="gran" hidden></p></div>
+<div class="fgroup"><span class="flabel">Inferred</span><div class="chips" data-key="inf" data-mode="one"></div></div>
 <div class="fgroup"><span class="flabel">Price series</span><div class="chips" data-key="series" data-mode="many"></div></div>
 <div class="fgroup"><span class="flabel">Availability</span><div class="chips" data-key="avail" data-mode="one"></div></div>
 <div class="fgroup"><span class="flabel">Lightness</span><div class="lrange">
@@ -121,13 +122,13 @@
 
 <footer class="fine">
 <p>Mixes are simulated with <a href="https://github.com/scrtwpns/mixbox">Mixbox</a> (Secret Weapons, CC BY-NC 4.0), the same pigment-mixing model artistpigments.org uses for its mixing paths, starting from each paint's measured masstone, the same color as its dot on the wheel. Real tinting strength isn't known, so a strong staining paint will dominate more on paper than here. Treat mixes as a preview and confirm on paper.</p>
-<p>Color data and paint properties: <a href="https://artistpigments.org/">artistpigments.org</a> (CC BY-NC 4.0), mostly handmade masstone samples; a few paints use the manufacturer's published values or a printed color chart, and say so. Lightfastness is converted from each brand's own scale (ASTM, AA–C, stars) to a common I–IV, and staining to non, semi or staining. Price series are each brand's own. Reach is the area your palette covers in the a*b* plane, traced along the simulated mixing curve between every pair of your paints rather than straight lines. It's a guide, not a measurement. The wheel doesn't show lightness; use the Lightness filter (0 is black, 100 is white) to narrow by it. Not affiliated with any paint maker.</p>
+<p>Color data and paint properties: <a href="https://artistpigments.org/">artistpigments.org</a> (CC BY-NC 4.0), mostly handmade masstone samples; a few paints use the manufacturer's published values or a printed color chart, and say so. Lightfastness is converted from each brand's own scale (ASTM, AA–C, stars) to a common I–IV, and staining to non, semi or staining. Where a brand doesn't publish staining or granulation, the value is inferred from how other brands rate the same pigment and shown with a hollow dot (○) instead of a filled one (●). The Inferred filter can leave these out, and pigments that brands rate differently stay unknown. Price series are each brand's own. Reach is the area your palette covers in the a*b* plane, traced along the simulated mixing curve between every pair of your paints rather than straight lines. It's a guide, not a measurement. The wheel doesn't show lightness; use the Lightness filter (0 is black, 100 is white) to narrow by it. Not affiliated with any paint maker.</p>
 </footer>
 </main>
 <div id="tip" aria-hidden="true"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="sheet" class="sheet" role="dialog" aria-labelledby="sheetTitle" hidden></div>
-<script src="js/mixbox.js?v=59d288f"></script>
-<script src="js/app.js?v=59d288f"></script>
+<script src="js/mixbox.js?v=infer2"></script>
+<script src="js/app.js?v=infer2"></script>
 </body>
 </html>

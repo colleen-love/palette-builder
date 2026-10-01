@@ -10,7 +10,7 @@ const MEDIA=[
  {key:"watercolor",name:"Watercolor",file:"data/paints.json",about:"Transparent washes, lightened with water",value:["vangogh","davinci"],strong:"a staining paint takes over faster on paper"},
  {key:"gouache",name:"Gouache",file:"data/gouache.json",about:"Opaque, matte and rewettable",value:["winsor-and-newton-designers-gouache"],white:true},
  {key:"oil",name:"Oil",file:"data/oil.json",about:"Slow drying, blends on the canvas",value:["maimeri-classico"],white:true},
- {key:"acrylic",name:"Acrylic",file:"data/acrylic.json",about:"Fast drying and water based",value:["liquitex-basics-acrylics"],white:true}];
+ {key:"acrylic",name:"Acrylic",file:"data/acrylic.json",about:"Fast drying and water based",value:["liquitex-basics-acrylics","vallejo-acrylic-artist-color"],white:true}];
 start();
 
 function start(){
@@ -191,7 +191,7 @@ const valueBrands=()=>(cur.value||[]).filter(k=>BRANDS[k]);
 // one tap narrows the wheel to the medium's good-value brands; tapping again shows every brand
 function quickBrands(){const vb=valueBrands(),box=$("quick");box.hidden=!vb.length;if(!vb.length)return;
  const on=st.f.brand.length===vb.length&&vb.every(k=>st.f.brand.includes(k));
- box.innerHTML=`<button class="chip vchip" aria-pressed="${on}">Good value</button><span class="note">${esc(vb.map(k=>BRANDS[k].short).join(" and "))}: among the least expensive lines in US art stores with lightfast (I or II) paints for every basic color. Prices vary by store and country.</span>`;
+ box.innerHTML=`<button class="chip vchip" aria-pressed="${on}">Good value</button><span class="note">${esc(vb.map(k=>BRANDS[k].short).join(" and "))}: among the least expensive lines sold in the US with lightfast (I or II) paints for every basic color. Prices vary by store and country.</span>`;
  box.querySelector("button").onclick=()=>{st.f.brand=on?[]:[...vb];save();buildChips();render()}}
 $("clearF").onclick=()=>{st.f=clone(DEFF);save();buildChips();syncLight();render()};
 const filterBtn=$("filterBtn"),filtersEl=$("filters");
@@ -494,7 +494,9 @@ const pig0=p=>(p.pig||[""])[0];
 const SLOTS=[{h:97,win:12,maxH:99,skip:/green/i,lean:p=>8*(p.h-88)},{h:80,maxH:85},{h:38},{h:14},
  {h:290,pig:/^PB29$/,bonus:p=>0},
  // a phthalo's dark masstone sits far from 255°, so only ceruleans and teals are held to the hue
- {h:255,pig:/^PB(15|16|17|35|36)\b/,bonus:p=>/^PB15/.test(pig0(p))?25:-hueGap(p.h,255)}];
+ // It also has to look different from the warm blue and lean greener (10° or more): some brands'
+ // phthalo masstone lands right on their ultramarine, which would make the pair one paint.
+ {h:255,pig:/^PB(15|16|17|35|36)\b/,bonus:p=>/^PB15/.test(pig0(p))?25:-hueGap(p.h,255),apart:15}];
 const WHITE={only:p=>/^PW[456]$/.test(pig0(p))&&p.L>85&&!/transparent/i.test(p.n),score:p=>(pig0(p)==="PW6"?20:0)+(/titanium/i.test(p.n)?10:0)+p.L/10};
 const BLACK={only:p=>/^PBk/.test(pig0(p))&&p.L<32&&p.C<10&&!/gr[ae]y/i.test(p.n),score:p=>-p.L};
 const slotsFor=()=>cur.white?[...SLOTS,WHITE,BLACK]:SLOTS;
@@ -508,7 +510,7 @@ function slotScore(p,sl,win){if(effect.test(p.n))return null;
 // the best paint for each slot; null when a slot can't be filled (unless partial)
 function fitSet(ps,win,partial){const out=[];let tot=0;
  for(const sl of slotsFor()){let best=null,bs=-Infinity;
-  for(const p of ps){if(out.includes(p))continue;const sc=slotScore(p,sl,win);if(sc!=null&&sc>bs){bs=sc;best=p}}
+  for(const p of ps){if(out.includes(p)||(sl.apart&&out.some(q=>Math.hypot(p.L-q.L,p.a-q.a,p.b-q.b)<sl.apart||(pig0(q)==="PB29"&&((q.h-p.h+360)%360)<10))))continue;const sc=slotScore(p,sl,win);if(sc!=null&&sc>bs){bs=sc;best=p}}
   if(best){out.push(best);tot+=bs}else if(!partial)return null}
  return{out,tot}}
 // Recommended paints are rated lightfastness I or II, so they last. Mixtures count too (budget lines

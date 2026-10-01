@@ -22,7 +22,7 @@ On phones the three sections sit behind a bottom menu, the filters open from a b
 - `data/paints.json`: every watercolor, with its brand, CIELAB color and properties
 - `data/gouache.json`, `data/oil.json`, `data/acrylic.json`: the other mediums, in the same format
 - `data/inference-report.md`: how well the staining and granulation inference matches the brands' own ratings
-- `tools/import_artistpigments.py`: converts artistpigments.org exports into these files (Daniel Smith in `paints.json`, and the three opaque mediums)
+- `tools/import_artistpigments.py`: converts artistpigments.org exports into these files (Daniel Smith in `paints.json`, and the three opaque mediums). Its `SUPPLEMENTS` list adds paints the export lacks from the makers' own data: so far Williamsburg's Ultramarine Blue and Phthalo Blue, which artistpigments.org has no color for, using Golden's published CIELAB readings
 - `tools/infer_properties.py`: fills in watercolor staining and granulation from the pigments
 
 The page loads `data/paints.json` with `fetch`, so opening `index.html` straight from disk won't work. Serve the folder instead, for example `python3 -m http.server`, and open http://localhost:8000.

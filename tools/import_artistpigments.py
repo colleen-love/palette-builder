@@ -202,6 +202,25 @@ def write(path, head, paints):
     path.write_text(DUMP(head)[:-1] + ',"paints":[' + ",\n".join(DUMP(p) for p in paints) + "]}")
 
 
+# Paints the export lacks, from the makers' own published data. artistpigments.org has no color
+# for Williamsburg's darkest paints (Munsell value below 1, likely past what its Munsell conversion
+# covers), which left the line without a single-pigment ultramarine or phthalo blue. Lab is Golden's
+# CIELAB reading of a 6 mil wet drawdown ("Munsell and Lab Readings for Williamsburg Handmade Oil
+# Colors", justpaint.org, 2017); the rest is from each paint's page on goldenartistcolors.com.
+SUPPLEMENTS = {
+    "oil": [
+        {"brand": "golden-williamsburg", "name": "Ultramarine Blue", "L": 4.78, "a": 24.88, "b": -37.9,
+         "single": True, "lf": 1, "lfRaw": "ASTM I", "trans": "T", "series": "2", "pig": ["PB29"],
+         "src": "maker", "dry": "medium", "dryRaw": "2-7 days",
+         "url": "https://goldenartistcolors.com/products/williamsburg-artist-oil-colors-ultramarine-blue"},
+        {"brand": "golden-williamsburg", "name": "Phthalo Blue", "L": 7.75, "a": 22.12, "b": -33.56,
+         "single": True, "lf": 1, "lfRaw": "ASTM I", "trans": "T", "series": "4", "pig": ["PB15:3"],
+         "src": "maker", "dry": "slow", "dryRaw": "5-14 days",
+         "url": "https://goldenartistcolors.com/products/williamsburg-artist-oil-colors-phthalo-blue"},
+    ],
+}
+
+
 def opaque(src):
     doc = json.loads(Path(src).read_text())
     for medium, brands in doc["media"].items():
@@ -210,6 +229,10 @@ def opaque(src):
             out_brands.append({"key": bkey, "name": b["name"], "short": SHORT.get(bkey, b["name"]), "url": b["url"]})
             scale = brand_scale(b["paints"])
             out += with_ids([(convert(p, bkey, scale, medium), p) for p in b["paints"]], bkey)
+            # after the brand's own paints, unless a later export has them
+            have = {q["name"] for q in out if q["brand"] == bkey}
+            out += [{"id": f"{bkey}:{q['name']}", **q} for q in SUPPLEMENTS.get(medium, [])
+                    if q["brand"] == bkey and q["name"] not in have]
         notes = [n for n in doc["notes"] if not n.startswith(("extra holds", "pigments ="))] + [
             "lf is lightfastness normalized to 1 (best) - 4 (poor) across brand scales; lfRaw is the brand's own rating.",
             "trans: T, ST, SO, O. pig: Colour Index codes. src: chart (printed chart) or maker (manufacturer data).",

@@ -496,7 +496,7 @@ const SLOTS=[{h:97},{h:80},{h:38},{h:14},
 const WHITE={only:p=>/^PW[456]$/.test(pig0(p))&&p.L>85&&!/transparent/i.test(p.n),score:p=>(pig0(p)==="PW6"?20:0)+(/titanium/i.test(p.n)?10:0)+p.L/10};
 const BLACK={only:p=>/^PBk/.test(pig0(p))&&p.L<32&&p.C<10&&!/gr[ae]y/i.test(p.n),score:p=>-p.L};
 const slotsFor=()=>cur.white?[...SLOTS,WHITE,BLACK]:SLOTS;
-const base=p=>(p.single?15:0)-(p.lf>2?40:!p.lf?10:0)-(tinted(p)?30:0)-(/\bhue\b/i.test(p.n)?10:0);
+const base=p=>(p.single?15:0)-(p.lf>2?40:p.lf===2?5:!p.lf?10:0)-(tinted(p)?30:0)-(/\bhue\b/i.test(p.n)?10:0);
 function slotScore(p,sl,win){if(effect.test(p.n))return null;
  if(sl.only)return sl.only(p)?sl.score(p)+base(p):null;
  if(sl.pig&&sl.pig.test(pig0(p))&&p.C>=20)return 100+p.C+sl.bonus(p)+base(p);
@@ -507,8 +507,9 @@ function fitSet(ps,win,partial){const out=[];let tot=0;
   for(const p of ps){if(out.includes(p))continue;const sc=slotScore(p,sl,win);if(sc!=null&&sc>bs){bs=sc;best=p}}
   if(best){out.push(best);tot+=bs}else if(!partial)return null}
  return{out,tot}}
-// Recommended paints are single pigments rated lightfastness I: they mix cleanly and last.
-const sound=p=>p.single===true&&p.lf===1;
+// Recommended paints are single pigments rated lightfastness I or II: they mix cleanly and last.
+// (Some brands rate phthalo blue PB15 II, as ASTM does in watercolor.) I wins a close call.
+const sound=p=>p.single===true&&(p.lf===1||p.lf===2);
 // Sound paints first, from as few and as affordable brands as possible: one good-value brand,
 // then the medium's good-value brands together, then any one brand, then any brands. Only when no
 // sound set exists does it fall back to the best paints available.
@@ -600,7 +601,7 @@ function obStep2(){const keys=MEDIA.map(m=>m.key).filter(k=>obPick.includes(k)),
    ob.insertAdjacentHTML("beforeend",'<div class="obfoot"><span></span><button class="primary" data-act="done">Got it</button></div>');ob.querySelector("[data-act=done]").onclick=()=>finish(false);return}
   const set=starterSet(),has=st.sel.length>0,brands=[...new Set(set.map(p=>p.bs))];
   ob.querySelector(".obsub").textContent=(has?`You already have ${st.sel.length} paint${st.sel.length===1?"":"s"} here. Add a basic set, or keep your palette as it is.`:"How would you like to start?")+more;
-  ob.insertAdjacentHTML("beforeend",`<div class="obgrid two"><button class="obcard" data-act="set"><span class="obsw" role="img" aria-label="${esc(set.map(p=>p.n).join(", "))}">${set.map(p=>`<span style="background:${p.rgb}" title="${esc(p.n)}"></span>`).join("")}</span><b>${has?"Add":"Start with"} a basic set</b><span class="note">A warm and a cool of each primary${cur.white?", plus white and black,":","} so you can mix most colors right away${set.sound?". Each is a single pigment rated lightfast (I)":""}${brands.length===1?`, all from ${esc(brands[0])}`:""}.</span></button>
+  ob.insertAdjacentHTML("beforeend",`<div class="obgrid two"><button class="obcard" data-act="set"><span class="obsw" role="img" aria-label="${esc(set.map(p=>p.n).join(", "))}">${set.map(p=>`<span style="background:${p.rgb}" title="${esc(p.n)}"></span>`).join("")}</span><b>${has?"Add":"Start with"} a basic set</b><span class="note">A warm and a cool of each primary${cur.white?", plus white and black,":","} so you can mix most colors right away${set.sound?`. Each is a single pigment rated lightfast (${set.every(p=>p.lf===1)?"I":"I or II"})`:""}${brands.length===1?`, all from ${esc(brands[0])}`:""}.</span></button>
 <button class="obcard" data-act="empty"><span class="obsw empty" aria-hidden="true"></span><b>${has?"Keep my palette":"Start empty"}</b><span class="note">${has?"Leave your paints as they are.":"Pick paints yourself on the color wheel."}</span></button></div>`);
   ob.querySelector("[data-act=set]").onclick=()=>finish(true);ob.querySelector("[data-act=empty]").onclick=()=>finish(false)})}
 function finish(withSet){S.onboarded=true;S.news=false;S.shown=MEDIA.map(m=>m.key).filter(k=>obKeys.includes(k)||k===cur.key);ob.close();setTab("pigments");history.replaceState(null,"",location.pathname+location.search+"#pigments");

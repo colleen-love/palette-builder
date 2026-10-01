@@ -25,30 +25,30 @@ Per pigment (codes with at least 3 tested paints). Below 60% the pigment is left
 | Pigment | Match | Tested | Rate | Brand votes | Filled |
 |---|---|---|---|---|---|
 | PY184 | 0 | 4 | 0% | 2: 2.0, 3: 2.0 | uncertain |
-| PG18 | 0 | 4 | 0% | 1: 2.0, 2: 2.0 | uncertain |
-| PY150 | 0 | 4 | 0% | 2: 2.0, 3: 2.0 | uncertain |
-| PY42 | 0 | 4 | 0% | 3: 3.0, 1: 1.0, 2: 1.0 | uncertain |
 | PBr24 | 0 | 4 | 0% | 2: 2.0, 3: 2.0 | uncertain |
-| PB60 | 0 | 3 | 0% | 3: 3.0, 2: 2.0 | uncertain |
+| PY42 | 0 | 4 | 0% | 3: 3.0, 1: 1.0, 2: 1.0 | uncertain |
+| PY150 | 0 | 4 | 0% | 2: 2.0, 3: 2.0 | uncertain |
+| PG18 | 0 | 4 | 0% | 1: 2.0, 2: 2.0 | uncertain |
 | PG17 | 0 | 3 | 0% | 3: 2.0, 2: 1.5, 1: 0.5 | uncertain |
+| PB60 | 0 | 3 | 0% | 3: 3.0, 2: 2.0 | uncertain |
 | PY43 | 1 | 6 | 17% | 2: 2.2, 1: 0.8 | uncertain |
 | PR101 | 14 | 23 | 61% | 3: 4.7, 2: 0.7, 1: 0.6 | yes |
 | PR108 | 10 | 15 | 67% | 3: 3.6, 2: 1.4 | yes |
 | PB15 | 6 | 9 | 67% | 3: 3.3, 2: 1.7 | yes |
-| PR254 | 4 | 6 | 67% | 3: 4.0, 2: 2.0 | yes |
 | PG36 | 4 | 6 | 67% | 3: 4.0, 2: 2.0 | yes |
+| PR254 | 4 | 6 | 67% | 3: 4.0, 2: 2.0 | yes |
 | PB15:3 | 2 | 3 | 67% | 3: 2.0, 2: 1.0 | yes |
 | PV19 | 13 | 19 | 68% | 3: 4.8, 2: 2.2 | yes |
+| PR102 | 5 | 7 | 71% | 2: 0.7, 1: 0.3 | yes |
 | PV23 | 5 | 7 | 71% | 3: 5.0, 2: 2.0 | yes |
 | PG7 | 5 | 7 | 71% | 3: 5.0, 1: 1.0, 2: 1.0 | yes |
-| PR102 | 5 | 7 | 71% | 2: 0.7, 1: 0.3 | yes |
 | PO20 | 5 | 7 | 71% | 3: 3.3, 2: 0.7 | yes |
-| PY3 | 3 | 4 | 75% | 2: 3.0, 3: 1.0 | yes |
-| PO73 | 3 | 4 | 75% | 3: 3.0, 2: 1.0 | yes |
 | PR83 | 3 | 4 | 75% | 2: 2.0, 3: 1.0 | yes |
-| PV29 | 3 | 4 | 75% | 3: 3.0, 2: 1.0 | yes |
 | PG50 | 3 | 4 | 75% | 2: 2.5, 1: 0.5 | yes |
+| PY3 | 3 | 4 | 75% | 2: 3.0, 3: 1.0 | yes |
 | PBk6 | 3 | 4 | 75% | 3: 3.0, 2: 1.0 | yes |
+| PV29 | 3 | 4 | 75% | 3: 3.0, 2: 1.0 | yes |
+| PO73 | 3 | 4 | 75% | 3: 3.0, 2: 1.0 | yes |
 | PR264 | 4 | 5 | 80% | 3: 4.0, 2: 1.0 | yes |
 | PB27 | 5 | 6 | 83% | 3: 5.0, 2: 1.0 | yes |
 | PB29 | 6 | 7 | 86% | 2: 3.5, 1: 0.5 | yes |
@@ -56,8 +56,8 @@ Per pigment (codes with at least 3 tested paints). Below 60% the pigment is left
 | PY35 | 15 | 15 | 100% | 3: 5.0 | yes |
 | PB28 | 5 | 5 | 100% | 2: 4.0 | yes |
 | PB16 | 5 | 5 | 100% | 3: 5.0 | yes |
-| PY110 | 4 | 4 | 100% | 2: 4.0 | yes |
 | PBr6 | 4 | 4 | 100% | 1: 2.0 | yes |
+| PY110 | 4 | 4 | 100% | 2: 4.0 | yes |
 | PR255 | 3 | 3 | 100% | 2: 3.0 | yes |
 | PV55 | 3 | 3 | 100% | 2: 2.0 | yes |
 
@@ -65,13 +65,13 @@ Per pigment (codes with at least 3 tested paints). Below 60% the pigment is left
 
 Each brand held out in turn and predicted from the other brands.
 
-- One-pigment paints: 251 of 288 match (87%)
-- One-pigment paints whose pigment passes the test below: 248 of 269 match (92%)
-- Mixtures, by the any-component rule: 170 of 212 match (80%)
+- One-pigment paints: 196 of 233 match (84%)
+- One-pigment paints whose pigment passes the test below: 192 of 210 match (91%)
+- Mixtures, by the any-component rule: 150 of 184 match (82%)
 
 | Brand held out | Match | Tested | Rate |
 |---|---|---|---|
-| ds | 140 | 168 | 83% |
+| ds | 65 | 85 | 76% |
 | wn | 29 | 30 | 97% |
 | cotman | 1 | 1 | 100% |
 | qor | 23 | 32 | 72% |
@@ -86,44 +86,42 @@ Per pigment (codes with at least 3 tested paints). Below 60% the pigment is left
 | Pigment | Match | Tested | Rate | Brand votes | Filled |
 |---|---|---|---|---|---|
 | PR102 | 0 | 7 | 0% | N: 2.0, G: 1.0 | uncertain |
+| PY42 | 0 | 4 | 0% | N: 3.3, G: 2.7 | uncertain |
 | PB27 | 0 | 3 | 0% | N: 4.0, G: 3.0 | uncertain |
-| PY42 | 1 | 5 | 20% | N: 3.3, G: 2.7 | uncertain |
-| PW6 | 2 | 4 | 50% | N: 6.0, G: 1.0 | uncertain |
-| PV19 | 6 | 9 | 67% | N: 6.4, G: 0.6 | yes |
-| PR188 | 2 | 3 | 67% | N: 4.0, G: 1.0 | yes |
-| PR122 | 2 | 3 | 67% | N: 6.5, G: 0.5 | yes |
-| PG36 | 3 | 4 | 75% | N: 5.0, G: 1.0 | yes |
+| PW6 | 1 | 3 | 33% | N: 6.0, G: 1.0 | uncertain |
+| PV19 | 3 | 6 | 50% | N: 6.4, G: 0.6 | uncertain |
+| PG36 | 2 | 3 | 67% | N: 5.0, G: 1.0 | yes |
 | PBr7 | 26 | 26 | 100% | G: 5.5, N: 1.4 | yes |
 | PB29 | 13 | 13 | 100% | G: 7.0, N: 1.0 | yes |
 | PR108 | 13 | 13 | 100% | G: 4.1, N: 1.9 | yes |
 | PY43 | 11 | 11 | 100% | G: 5.0, N: 1.0 | yes |
-| PB28 | 10 | 10 | 100% | G: 6.0, N: 1.0 | yes |
 | PB36 | 10 | 10 | 100% | G: 5.0 | yes |
+| PB28 | 10 | 10 | 100% | G: 6.0, N: 1.0 | yes |
 | PV15 | 9 | 9 | 100% | G: 5.0 | yes |
 | PB35 | 7 | 7 | 100% | G: 5.0 | yes |
 | PG50 | 7 | 7 | 100% | G: 5.0 | yes |
-| PG18 | 6 | 6 | 100% | G: 6.0 | yes |
 | PG17 | 6 | 6 | 100% | G: 5.5, N: 0.5 | yes |
 | PBk9 | 6 | 6 | 100% | G: 6.0, N: 1.0 | yes |
-| PY53 | 4 | 4 | 100% | G: 4.0, N: 2.0 | yes |
+| PG18 | 6 | 6 | 100% | G: 6.0 | yes |
 | PBr24 | 4 | 4 | 100% | G: 4.0, N: 2.0 | yes |
+| PG26 | 4 | 4 | 100% | G: 4.0 | yes |
 | PBr6 | 4 | 4 | 100% | G: 2.0 | yes |
 | PV16 | 4 | 4 | 100% | G: 4.0 | yes |
-| PG26 | 4 | 4 | 100% | G: 4.0 | yes |
+| PY53 | 4 | 4 | 100% | G: 4.0, N: 2.0 | yes |
+| PBk11 | 3 | 3 | 100% | G: 3.0 | yes |
 | PR233 | 3 | 3 | 100% | G: 3.0 | yes |
 | PG23 | 3 | 3 | 100% | G: 3.0 | yes |
-| PBk11 | 3 | 3 | 100% | G: 3.0 | yes |
 | PY35 | 3 | 3 | 100% | N: 6.0 | yes |
 
 ## Filled
 
 | Property | Source | Paints |
 |---|---|---|
-| gran | family | 11 |
-| gran | pigment | 317 |
-| gran | uncertain | 154 |
-| gran | unknown | 13 |
+| gran | family | 10 |
+| gran | pigment | 350 |
+| gran | uncertain | 211 |
+| gran | unknown | 18 |
 | stain | family | 13 |
 | stain | pigment | 94 |
 | stain | uncertain | 232 |
-| stain | unknown | 15 |
+| stain | unknown | 35 |

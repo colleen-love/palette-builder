@@ -23,7 +23,7 @@ function lab2arr(L,a,b){return lab2rgb(L,a,b).match(/\d+/g).map(Number)}
 const $=id=>document.getElementById(id);
 
 // ---- state ----
-const DEFF={brand:[],lf:[],pig:["any"],trans:[],stain:[],gran:["any"],inf:["inc"],series:[],avail:["cur"],light:[0,100]};
+const DEFF={brand:[],lf:[],pig:["any"],trans:[],stain:[],gran:["any"],inf:["inc"],dry:[],series:[],avail:["cur"],light:[0,100]};
 const KEY="wpb:v3";
 const clone=o=>JSON.parse(JSON.stringify(o));
 const blank=()=>({sel:[],base:[],mix:[],mix3:false,f:clone(DEFF)});
@@ -69,9 +69,10 @@ function fails(p){const f=st.f,w=[];
  if(f.trans.length){if(!p.trans){w.push("no transparency data")}else if(!f.trans.includes(p.trans))w.push(TNAME[p.trans].toLowerCase())}
  if(f.stain.length){if(!known(p,"stain")){w.push(p.stain?"no brand staining data":"no staining data")}else if(!f.stain.includes(String(p.stain)))w.push(SNAME[p.stain].toLowerCase())}
  const g=f.gran[0];if(g!=="any"){if(!known(p,"gran")){w.push(p.gran?"no brand granulation data":"no granulation data")}else if(p.gran!==g)w.push(p.gran==="G"?"granulating":"smooth")}
+ if(f.dry.length){if(!p.dry){w.push("no drying time data")}else if(!f.dry.includes(p.dry))w.push(p.dry+" drying")}
  if(f.series.length){if(!p.series){w.push("no series data")}else if(!f.series.includes(p.series))w.push("series "+p.series)}
  if(f.avail[0]==="cur"&&p.disc)w.push("discontinued");
- if(p.L<f.light[0]||p.L>f.light[1])w.push("lightness "+p.L);
+ if(p.L<f.light[0]||(f.light[1]<100&&p.L>f.light[1]))w.push("lightness "+p.L);
  return w}
 const passes=p=>fails(p).length===0;
 
@@ -104,10 +105,10 @@ function paintAdded(rect){toast(S.hinted?"Paint added":"Added. Your paints are u
 function svgPt(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
 const unitsPerPx=svg=>248/svg.getBoundingClientRect().width;
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
-const lfTxt=p=>p.lfRaw?`Lightfastness ${p.lfRaw}${p.lfRaw.startsWith("ASTM")||ROMAN[p.lfRaw]?"":` (≈ ${ROMAN[p.lf]})`}`:"Lightfastness not listed";
+const lfTxt=p=>p.lfRaw?`Lightfastness ${p.lfRaw}${!p.lf||p.lfRaw.includes("ASTM")||ROMAN[p.lfRaw]?"":` (≈ ${ROMAN[p.lf]})`}`:"Lightfastness not listed";
 // filled dot: the maker's rating; hollow dot: inferred from the pigment
 const mark=(p,k,txt)=>!p[k]?null:`${inferred(p,k)?"○":"●"}\u2009${txt}`;
-const propsOf=p=>[p.single===true?"Single pigment":p.single===false?"Mixture":null,lfTxt(p),p.trans?TNAME[p.trans]:null,mark(p,"stain",SNAME[p.stain]),mark(p,"gran",p.gran==="G"?"Granulating":"Non-granulating"),p.series?"Series "+p.series:null,p.disc?"Discontinued":null].filter(Boolean).join(" · ");
+const propsOf=p=>[p.single===true?"Single pigment":p.single===false?"Mixture":null,lfTxt(p),p.trans?TNAME[p.trans]:null,mark(p,"stain",SNAME[p.stain]),mark(p,"gran",p.gran==="G"?"Granulating":"Non-granulating"),p.dryRaw?"Drying time "+p.dryRaw:null,p.series?"Series "+p.series:null,p.disc?"Discontinued":null].filter(Boolean).join(" · ");
 const SRCWHY={pigment:"how other brands rate the same pigment",family:"its pigment family"};
 // one line saying which values are guesses, and which ones the brands disagree on
 function infNote(p){const g=[],u=[];
@@ -164,12 +165,13 @@ function groups(){const inBrands=P.filter(p=>!st.f.brand.length||st.f.brand.incl
   stain:[["1","Non"],["2","Semi"],["3","Staining"]],
   gran:[["any","Any"],["G","Granulating"],["N","Smooth"]],
   inf:[["inc","Include inferred"],["exc","Brand-stated only"]],
+  dry:[["fast","Fast"],["medium","Medium"],["slow","Slow"]],
   series:[...new Set(inBrands.map(p=>p.series).filter(Boolean))].sort(seriesSort).map(s=>[s,s]),
   avail:[["cur","In production"],["any","Include discontinued"]]}}
 // A filter only shows when this medium's data has something for it: granulation means
 // little for oil, and a brand that doesn't publish series has nothing to pick from.
 const HAS={brand:()=>DATA.brands.length>1,lf:p=>p.lf,pig:p=>p.single!=null,trans:p=>p.trans,stain:p=>p.stain,gran:p=>p.gran,
- inf:p=>inferred(p,"stain")||inferred(p,"gran"),series:p=>p.series,avail:p=>p.disc};
+ inf:p=>inferred(p,"stain")||inferred(p,"gran"),dry:p=>p.dry,series:p=>p.series,avail:p=>p.disc};
 function showGroups(){document.querySelectorAll(".chips").forEach(box=>{const k=box.dataset.key,on=k==="brand"?HAS.brand():P.some(HAS[k]);
  box.closest(".fgroup").hidden=!on;if(!on)st.f[k]=clone(DEFF[k])})}
 function buildChips(){const G=groups();
@@ -180,7 +182,7 @@ function buildChips(){const G=groups();
    const on=many?(v==="__any"?st.f[key].length===0:st.f[key].includes(v)):st.f[key][0]===v;b.setAttribute("aria-pressed",on);
    b.onclick=()=>{if(many){if(v==="__any")st.f[key]=[];else{const i=st.f[key].indexOf(v);if(i>=0)st.f[key].splice(i,1);else st.f[key].push(v);if(st.f[key].length===G[key].length)st.f[key]=[]}}else st.f[key]=[v];save();buildChips();render()};
    box.appendChild(b)})});
- const n=["brand","lf","trans","stain","series"].filter(k=>st.f[k].length).length+(st.f.pig[0]!=="any")+(st.f.gran[0]!=="any")+(st.f.inf[0]!=="inc")+(st.f.avail[0]!=="cur")+(st.f.light[0]!==0||st.f.light[1]!==100);
+ const n=["brand","lf","trans","stain","dry","series"].filter(k=>st.f[k].length).length+(st.f.pig[0]!=="any")+(st.f.gran[0]!=="any")+(st.f.inf[0]!=="inc")+(st.f.avail[0]!=="cur")+(st.f.light[0]!==0||st.f.light[1]!==100);
  $("fBadge").textContent=n;$("fBadge").hidden=!n}
 $("clearF").onclick=()=>{st.f=clone(DEFF);save();buildChips();syncLight();render()};
 const filterBtn=$("filterBtn"),filtersEl=$("filters");
@@ -470,10 +472,12 @@ const _render=render;render=function(){_render();renderMix()};
 // Target CIELAB hue angles of masstones: lemon and deep yellow, scarlet and rose, ultramarine and a greener blue.
 const STARTER=[97,80,38,14,290,255];
 const hueGap=(a,b)=>Math.abs(((a-b)%360+540)%360-180);
+// a mix with white is a tint, not a primary to mix from
+const tinted=p=>(p.pig||[]).length>1&&p.pig.some(c=>/^PW/.test(c));
 // the most chromatic paint near each target hue, favoring single pigments and good lightfastness
 function fitSet(ps,win,partial){const out=[];let tot=0;
  for(const h of STARTER){let best=null,bs=-Infinity;
-  for(const p of ps){if(out.includes(p))continue;const d=hueGap(p.h,h);if(d>win)continue;const sc=p.C-2.5*d+(p.single?8:0)-(p.lf>2?40:0);if(sc>bs){bs=sc;best=p}}
+  for(const p of ps){if(out.includes(p))continue;const d=hueGap(p.h,h);if(d>win)continue;const sc=p.C-2.5*d+(p.single?8:0)-(p.lf>2?40:0)-(tinted(p)?30:0);if(sc>bs){bs=sc;best=p}}
   if(best){out.push(best);tot+=bs}else if(!partial)return null}
  return{out,tot}}
 // one brand's set when a brand covers all six well, otherwise the best across brands

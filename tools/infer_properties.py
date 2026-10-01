@@ -24,7 +24,7 @@ Method
    held-out agreement is low, or whose brand votes are split, gives "uncertain" instead of
    a value.
 
-Brand silence. W&N, Schmincke, Holbein, QoR and Da Vinci mark only granulating paints, and
+Brand silence. Daniel Smith, W&N, Schmincke, Holbein, QoR and Da Vinci mark only granulating paints, and
 W&N, Cotman and Da Vinci only mark staining ones. When one of those brands leaves a paint
 unmarked but the pigment says it should be marked, the brand's silence and the pigment
 disagree, so the value is "uncertain" rather than a guess against the brand's own chart.
@@ -39,7 +39,7 @@ DATA = ROOT / "data" / "paints.json"
 REPORT = ROOT / "data" / "inference-report.md"
 
 # brands that only ever mark one side of the property (see "Brand silence" above)
-MARKS_ONLY_GRAN = {"wn", "qor", "schmincke", "holbein", "davinci"}
+MARKS_ONLY_GRAN = {"ds", "wn", "qor", "schmincke", "holbein", "davinci"}
 MARKS_ONLY_STAIN = {"wn", "cotman", "davinci"}
 
 # A pigment is filled only when its brands mostly agree:

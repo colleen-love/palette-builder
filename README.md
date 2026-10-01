@@ -1,6 +1,6 @@
 # Palette Builder
 
-**[Try it out!](https://colleen-love.github.io/watercolor-palette-builder/)**
+**[Try it out!](https://colleen-love.github.io/palette-builder/)**
 
 Select paints on the color wheel and add them to your palette, then mix them together. There's one palette for each medium: watercolor, gouache, oil and acrylic. The wheel places each medium's paints by hue angle and chroma, using masstone colors: about 1,100 watercolors from nine brands, 740 gouaches from 16 lines, 1,460 oils from 15 and 1,340 acrylics from 16.
 

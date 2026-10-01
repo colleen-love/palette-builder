@@ -94,6 +94,9 @@ svg#wheel{width:100%;height:auto;display:block;max-height:82vh;touch-action:mani
 .chip{font-size:13px;padding:4px 11px;min-height:32px;background:var(--panel);border-color:transparent}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color:var(--ink)}
 .fcount{font-size:13px;color:var(--graphite);margin:10px 0 0}
+.fwarn{grid-column:2;margin:2px 0 0;padding:8px 10px;border-radius:10px;background:var(--panel);font-size:12.5px;line-height:1.45;color:var(--graphite)}
+.fwarn[hidden]{display:none}
+@media (max-width:600px){.fwarn{grid-column:1}}
 .lrange{display:flex;flex-direction:column;gap:4px;padding-top:4px}
 .lslide{position:relative;height:28px}
 .ltrack{position:absolute;left:0;right:0;top:11px;height:6px;border-radius:3px;background:linear-gradient(to right,#1e1e1e,#fafafa);border:1px solid var(--rule)}

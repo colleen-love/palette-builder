@@ -284,7 +284,7 @@ function render(){
  gains.forEach(o=>gu.appendChild(addRow(o.p,"",`+${o.g.toFixed(1)}%`,r=>paintAdded(r))));
  const pu=$("pal");pu.innerHTML="";
  [...sel].sort(hueSort).forEach(p=>{const parts=[];if(A){const loss=(M.loss??={})[p.id]??=(A-envArea(envOf(sel.filter(q=>q!==p))))/A*100;if(loss>=0.1)parts.push(`Sets the edge · removing it loses ${loss.toFixed(1)}%`)}const w=fails(p);if(w.length)parts.push("Outside your filters: "+w.join(", "));pu.appendChild(palRow(p,parts.join("<br>")))});
- if(!sel.length){pu.innerHTML=`<li class="fine startli">Your ${cur.name.toLowerCase()} palette is empty. Add paints from the wheel or the search in Pigments, or start with a basic set: a warm and a cool of each primary.<br><button class="starter">Add a basic set</button></li>`;
+ if(!sel.length){pu.innerHTML=`<li class="fine startli">Your ${cur.name.toLowerCase()} palette is empty. Add paints from the wheel or the search in Pigments, or start with a basic set: a warm and a cool of each primary, single-pigment and lightfast where the brands allow.<br><button class="starter">Add a basic set</button></li>`;
   pu.querySelector(".starter").onclick=e=>addStarter(e.currentTarget.getBoundingClientRect())}
  search();drawFocus()}
 const q=$("q"),res=$("results");
@@ -487,15 +487,19 @@ const tinted=p=>(p.pig||[]).length>1&&p.pig.some(c=>/^PW/.test(c));
 // the most chromatic paint near each target hue, favoring single pigments and good lightfastness
 function fitSet(ps,win,partial){const out=[];let tot=0;
  for(const h of STARTER){let best=null,bs=-Infinity;
-  for(const p of ps){if(out.includes(p))continue;const d=hueGap(p.h,h);if(d>win)continue;if(effect.test(p.n))continue;const sc=p.C-2.5*d+(p.single?15:0)-(p.lf>2?40:!p.lf?10:0)-(tinted(p)?30:0);if(sc>bs){bs=sc;best=p}}
+  for(const p of ps){if(out.includes(p))continue;const d=hueGap(p.h,h);if(d>win)continue;if(effect.test(p.n)||p.C<30)continue;const sc=p.C-2.5*d+(p.single?15:0)-(p.lf>2?40:!p.lf?10:0)-(tinted(p)?30:0)-(/\bhue\b/i.test(p.n)?10:0);if(sc>bs){bs=sc;best=p}}
   if(best){out.push(best);tot+=bs}else if(!partial)return null}
  return{out,tot}}
-// one brand's set when a brand covers all six well, otherwise the best across brands
+// Recommended paints are single pigments rated lightfastness I: they mix cleanly and last.
+const sound=p=>p.single===true&&p.lf===1;
+// Sound paints first, from as few and as affordable brands as possible: one good-value brand,
+// then the medium's good-value brands together, then any one brand, then any brands. Only when no
+// sound set exists does it fall back to the best paints available.
 function starterSet(){const inProd=P.filter(p=>!p.disc),ok=inProd.filter(passes),pool=ok.length>=6?ok:inProd;
- const bestOf=keys=>{let best=null;for(const k of keys){const r=fitSet(pool.filter(p=>p.brand===k),14);if(r&&(!best||r.tot>best.tot))best=r}return best};
- // a good-value brand first, so a first palette doesn't start with the priciest paints
- const best=bestOf(valueBrands())||bestOf(DATA.brands.map(b=>b.key));
- return(best||fitSet(pool,14)||fitSet(pool,30,true)).out}
+ const bestOf=(groups,only)=>{let best=null;for(const g of groups){const r=fitSet(pool.filter(p=>g.includes(p.brand)&&(!only||sound(p))),14);if(r&&(!best||r.tot>best.tot))best=r}return best};
+ const value=valueBrands(),each=DATA.brands.map(b=>[b.key]),every=[DATA.brands.map(b=>b.key)];
+ const best=bestOf(value.map(k=>[k]),true)||bestOf([value],true)||bestOf(each,true)||bestOf(every,true)||bestOf(value.map(k=>[k]))||bestOf(each)||fitSet(pool,14)||fitSet(pool,30,true);
+ return Object.assign(best.out,{sound:best.out.length===6&&best.out.every(sound)})}
 function addStarter(rect){const add=starterSet().filter(p=>!inPal(p));add.forEach(p=>st.sel.push(p.id));save();render();
  toast(add.length?`Added ${add.length} paint${add.length===1?"":"s"}`:"Those paints are already in your palette",rect,2200)}
 
@@ -579,7 +583,7 @@ function obStep2(){const keys=MEDIA.map(m=>m.key).filter(k=>obPick.includes(k)),
    ob.insertAdjacentHTML("beforeend",'<div class="obfoot"><span></span><button class="primary" data-act="done">Got it</button></div>');ob.querySelector("[data-act=done]").onclick=()=>finish(false);return}
   const set=starterSet(),has=st.sel.length>0,brands=[...new Set(set.map(p=>p.bs))];
   ob.querySelector(".obsub").textContent=(has?`You already have ${st.sel.length} paint${st.sel.length===1?"":"s"} here. Add a basic set, or keep your palette as it is.`:"How would you like to start?")+more;
-  ob.insertAdjacentHTML("beforeend",`<div class="obgrid two"><button class="obcard" data-act="set"><span class="obsw" role="img" aria-label="${esc(set.map(p=>p.n).join(", "))}">${set.map(p=>`<span style="background:${p.rgb}" title="${esc(p.n)}"></span>`).join("")}</span><b>${has?"Add":"Start with"} a basic set</b><span class="note">A warm and a cool of each primary, so you can mix most colors right away${brands.length===1?`, all from ${esc(brands[0])}`:""}.</span></button>
+  ob.insertAdjacentHTML("beforeend",`<div class="obgrid two"><button class="obcard" data-act="set"><span class="obsw" role="img" aria-label="${esc(set.map(p=>p.n).join(", "))}">${set.map(p=>`<span style="background:${p.rgb}" title="${esc(p.n)}"></span>`).join("")}</span><b>${has?"Add":"Start with"} a basic set</b><span class="note">A warm and a cool of each primary, so you can mix most colors right away${set.sound?". Each is a single pigment rated lightfast (I)":""}${brands.length===1?`, all from ${esc(brands[0])}`:""}.</span></button>
 <button class="obcard" data-act="empty"><span class="obsw empty" aria-hidden="true"></span><b>${has?"Keep my palette":"Start empty"}</b><span class="note">${has?"Leave your paints as they are.":"Pick paints yourself on the color wheel."}</span></button></div>`);
   ob.querySelector("[data-act=set]").onclick=()=>finish(true);ob.querySelector("[data-act=empty]").onclick=()=>finish(false)})}
 function finish(withSet){S.onboarded=true;S.news=false;S.shown=MEDIA.map(m=>m.key).filter(k=>obKeys.includes(k)||k===cur.key);ob.close();setTab("pigments");history.replaceState(null,"",location.pathname+location.search+"#pigments");

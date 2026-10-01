@@ -211,9 +211,11 @@ function render(){
  const R=(k,f)=>document.querySelectorAll(`[data-r="${k}"]`).forEach(f);
  // reach shows in both Pigments and Palette
  const pv=Math.min(100,Math.round(A/FULL*100));R("pct",e=>e.textContent=pv+"%");R("pctBar",e=>e.style.width=pv+"%");
- const pool=P.filter(passes),fA=poolArea(pool),selOk=sel.filter(passes),sA=M.sA??=(selOk.length===sel.length?A:envArea(envOf(selOk))),out=sel.length-selOk.length;
+ const pool=P.filter(passes),fA=poolArea(pool),selOk=sel.filter(passes),Ef=M.Ef??=(selOk.length===sel.length?E:envOf(selOk)),sA=M.sA??=(selOk.length===sel.length?A:envArea(Ef)),out=sel.length-selOk.length;
  const fv=fA?Math.min(100,Math.round(sA/fA*100)):0;R("fpct",e=>e.textContent=fA?fv+"%":"–");R("fpctBar",e=>e.style.width=fv+"%");
- const fn=out?`${out} of your paints ${out===1?"is":"are"} outside your filters and not counted here.`:"";R("fnote",e=>e.textContent=fn);
+ // the second number only counts your paints that meet the filters; say so when that's not all of them
+ const fl=out?`of the range that meets your filters, from the ${selOk.length} of your ${sel.length} paints that meet them`:"of the range that meets your filters";R("flabel",e=>e.textContent=fl);
+ R("fnote",e=>e.textContent=out?`The first number counts all your paints; ${out} ${out===1?"is":"are"} outside your filters, so the second leaves ${out===1?"it":"them"} out.`:"");
  // say how many were dropped only for lack of data, so a short list is explainable
  // many brands don't publish staining or granulation: say so while those filters are on
  const inBrands=P.filter(p=>!st.f.brand.length||st.f.brand.includes(p.brand));
@@ -224,9 +226,12 @@ function render(){
  const cnt=`${pool.length} of ${P.length} paints match.`+(noData?` ${noData} more have no data for a filter you set.`:"");$("fcount").textContent=cnt;$("fcountTop").textContent=cnt;
  const d=bA?((A-bA)/bA*100):0;const dt=bA?(Math.abs(d)<0.05?"Same reach as your stored palette.":`${d>0?"+":""}${d.toFixed(1)}% compared with your stored palette.`):"";R("delta",e=>e.textContent=dt);
  // only paints near or past the current edge can push it out; skip the rest to stay quick with many brands
- const gains=M.gains??=(A?pool.filter(p=>!inPal(p)&&p.C>=.85*E[binOf(Math.atan2(p.b,p.a))]):[]).map(p=>{const e=E.slice();addPoint(e,p.a,p.b);sel.forEach(q=>addPair(e,p,q));return{p,g:(envArea(e)-A)/A*100}}).filter(o=>o.g>=0.5).sort((a,b)=>b.g-a.g).slice(0,6);
+ // gains are measured against the reach of your paints that meet the filters (the second Reach number),
+ // and only paints near or past that edge can push it out, which keeps this quick with many brands
+ const gains=M.gains??=(sA&&selOk.length>1?pool.filter(p=>!inPal(p)&&p.C>=.85*Ef[binOf(Math.atan2(p.b,p.a))]):[]).map(p=>{const e=Ef.slice();addPoint(e,p.a,p.b);selOk.forEach(q=>addPair(e,p,q));return{p,g:(envArea(e)-sA)/sA*100}}).filter(o=>o.g>=0.5).sort((a,b)=>b.g-a.g).slice(0,6);
  const gu=$("gains");gu.innerHTML="";
  if(sel.length<2)gu.innerHTML='<li class="fine">Add at least two paints to see your outline and what would widen it.</li>';
+ else if(selOk.length<2)gu.innerHTML='<li class="fine">Fewer than two of your paints meet your filters, so there\'s no filtered reach to widen yet.</li>';
  else if(!gains.length)gu.innerHTML='<li class="fine">Nothing that meets your filters adds more than half a percent.</li>';
  gains.forEach(o=>gu.appendChild(addRow(o.p,"",`+${o.g.toFixed(1)}%`,r=>toast("Paint added",r))));
  const pu=$("pal");pu.innerHTML="";

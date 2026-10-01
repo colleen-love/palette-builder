@@ -6,9 +6,13 @@ It rewrites data/paints.json and data/inference-report.md. It is safe to run aga
 filled on an earlier run are cleared first, so only the brands' own ratings feed the lookup.
 
 Method
-1. Pigment lookup. For every paint with one pigment code and a brand-stated rating, each brand gets
+1. Pigment lookup. For every paint with one pigment code and a brand-stated rating (hues,
+   which imitate another pigment, excluded), each brand gets
    one vote per pigment code (split if that brand rates the code both ways). The code's
-   value is the rating with the most brand votes.
+   value is the rating with the most brand votes. When brands are split on an exact code
+   (PB15:3) or don't rate it, the votes for all forms of that pigment (PB15, PB15:x) decide.
+   Hues of granulating pigments ("Manganese Blue Hue") are left out of the granulation lookup
+   and don't get inferred granulation: makers often add texture to them on purpose.
 2. Family defaults for codes no brand rates (FAMILY below).
 3. Mixtures use "any component": a mix granulates if any pigment granulates and stains as
    much as its most staining pigment. If a component is unknown and none decides the result,
@@ -76,12 +80,24 @@ def base_code(c):
     return re.sub(r":\d+$", "", c)
 
 
+GRANULATING_NAMES = r"manganese|cerulean|cobalt|ultramarine|viridian|sienna|umber|ochre|sepia|oxide|earth"
+
+
+def is_hue(p):
+    """An imitation of a granulating pigment ("Manganese Blue Hue", "Cobalt Blue Hue"). Makers
+    often add texture to these on purpose, so their granulation says more about the recipe than
+    about the pigment in them. Hues of smooth pigments ("Cadmium Red Hue") are ordinary data."""
+    n = p["name"]
+    return re.search(r"\bhue\b|\[hue\]", n, re.I) is not None and re.search(GRANULATING_NAMES, n, re.I) is not None
+
+
 def vote_table(paints, key, skip_brand=None):
-    """code -> Counter(rating -> brand votes), from brand-stated single-pigment paints."""
+    """code -> Counter(rating -> brand votes), from brand-stated single-pigment paints.
+    Also "base:<code>" entries that pool crystal forms (PB15, PB15:1, PB15:3...) of one pigment."""
     per = defaultdict(lambda: defaultdict(Counter))  # code -> brand -> Counter
     for p in paints:
         # one pigment code, even if the source calls the paint a mixture (extenders, dyes)
-        if p["brand"] == skip_brand or len(set(p.get("pig") or [])) != 1:
+        if p["brand"] == skip_brand or len(set(p.get("pig") or [])) != 1 or (key == "gran" and is_hue(p)):
             continue
         v = p.get(key)
         # a brand that marks granulating paints is saying the paints it leaves unmarked are smooth
@@ -89,6 +105,7 @@ def vote_table(paints, key, skip_brand=None):
             v = "N"
         if v is not None:
             per[p["pig"][0]][p["brand"]][v] += 1
+            per["base:" + base_code(p["pig"][0])][p["brand"]][v] += 1
     out = {}
     for code, brands in per.items():
         votes = Counter()
@@ -102,15 +119,21 @@ def vote_table(paints, key, skip_brand=None):
 
 def rate_code(code, votes, key):
     """Value for one pigment code: (value, source, note). value None means unknown."""
-    v = votes.get(code)
-    if v is None and base_code(code) != code:
-        v = votes.get(base_code(code))
-    if v:
+    def decide(v):
         n = sum(v.values())
         (top, w), *rest = v.most_common()
         if rest and abs(rest[0][1] - w) < 1e-9 or w / n < MIN_VOTE_SHARE:
-            return None, "uncertain", "brands disagree"
-        return top, "pigment", None
+            return None
+        return top
+
+    # the exact code first; if brands are split on it or don't rate it, all forms of the pigment
+    tried = [votes[c] for c in (code, "base:" + base_code(code)) if votes.get(c)]
+    for v in tried:
+        top = decide(v)
+        if top is not None:
+            return top, "pigment", None
+    if tried:
+        return None, "uncertain", "brands disagree"
     fam = FAMILY.get(code) or FAMILY.get(base_code(code))
     if fam:
         d = FAMILIES[fam][0 if key == "stain" else 1]
@@ -141,6 +164,8 @@ def predict(p, key, votes, weak, weak_mix=False):
     codes = p.get("pig") or []
     if not codes:
         return None, None
+    if key == "gran" and is_hue(p):
+        return None, "uncertain"   # texture is what a hue's recipe imitates, not its pigment's
     vals = []
     for c in dict.fromkeys(codes):
         v, s, _ = rate_code(c, votes, key)

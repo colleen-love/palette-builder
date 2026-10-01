@@ -1,41 +1,59 @@
-// Watercolor Palette Builder
-// Paint data lives in data/paints.json; mixing uses Mixbox (js/mixbox.js).
+// Palette Builder
+// One palette per medium. Each medium's paints live in their own file (see MEDIA); mixing uses Mixbox (js/mixbox.js).
 // same ?v= as this script, so new data isn't hidden behind a cached copy
 const ASSET_V=new URL(document.currentScript.src).searchParams.get("v")||"";
-fetch("data/paints.json"+(ASSET_V?"?v="+ASSET_V:"")).then(r=>{if(!r.ok)throw new Error(r.status+" "+r.statusText);return r.json()}).then(start).catch(err=>{
- document.getElementById("info").innerHTML=`<div class="loaderr">Couldn't load the paint data (${String(err.message||err)}). If you opened this file directly, serve the folder instead, e.g. <code>python3 -m http.server</code>.</div>`;
- console.error(err)});
+// A medium whose file isn't there yet (404) shows a "coming soon" note instead of the wheel.
+const MEDIA=[
+ {key:"watercolor",name:"Watercolor",file:"data/paints.json",about:"Transparent washes, lightened with water",strong:"a staining paint takes over faster on paper"},
+ {key:"gouache",name:"Gouache",file:"data/gouache.json",about:"Opaque, matte and rewettable",white:true},
+ {key:"oil",name:"Oil",file:"data/oil.json",about:"Slow drying, blends on the canvas",white:true},
+ {key:"acrylic",name:"Acrylic",file:"data/acrylic.json",about:"Fast drying and water based",white:true}];
+start();
 
-function start(DATA){
+function start(){
 const ROMAN={1:"I",2:"II",3:"III",4:"IV"};
 const TNAME={T:"Transparent",ST:"Semi-transparent",SO:"Semi-opaque",O:"Opaque"};
 const SNAME={1:"Non-staining",2:"Semi-staining",3:"Staining"};
-const BRANDS=Object.fromEntries(DATA.brands.map(b=>[b.key,b]));
 const NS="http://www.w3.org/2000/svg";
+const MBY=Object.fromEntries(MEDIA.map(m=>[m.key,m]));
+// the current medium's data; useMedium swaps these
+let cur=MEDIA[0],DATA={brands:[],paints:[]},BRANDS={},P=[],byId={},FULL=0,curveCache=new Map(),poolCache=new Map();
 function lab2rgb(L,a,b){let y=(L+16)/116,x=a/500+y,z=y-b/200;const f=t=>t**3>0.008856?t**3:(t-16/116)/7.787;x=0.95047*f(x);y=f(y);z=1.08883*f(z);let r=x*3.2406+y*-1.5372+z*-0.4986,g=x*-0.9689+y*1.8758+z*0.0415,bl=x*0.0557+y*-0.2040+z*1.0570;const c=v=>{v=v>0.0031308?1.055*v**(1/2.4)-0.055:12.92*v;return Math.round(Math.max(0,Math.min(1,v))*255)};return `rgb(${c(r)},${c(g)},${c(bl)})`}
 function lab2arr(L,a,b){return lab2rgb(L,a,b).match(/\d+/g).map(Number)}
-const P=DATA.paints.map((d,i)=>({...d,i,n:d.name,bs:BRANDS[d.brand].short,C:Math.hypot(d.a,d.b),h:((Math.atan2(d.b,d.a)*180/Math.PI)+360)%360,rgb:lab2rgb(d.L,d.a,d.b),arr:lab2arr(d.L,d.a,d.b),x:d.a,y:-d.b,lf:d.lf||0,stain:d.stain||0,gran:d.gran||"",trans:d.trans||"",series:d.series||""}));
-const byId=Object.fromEntries(P.map(p=>[p.id,p]));
 const $=id=>document.getElementById(id);
 
 // ---- state ----
 const DEFF={brand:[],lf:[],pig:["any"],trans:[],stain:[],gran:["any"],inf:["inc"],series:[],avail:["cur"],light:[0,100]};
-const KEY="wpb:v2";
+const KEY="wpb:v3";
 const clone=o=>JSON.parse(JSON.stringify(o));
-function load(){const s={sel:[],base:[],mix:[],mix3:false,f:clone(DEFF)};
- const ids=a=>Array.isArray(a)?a.filter(id=>byId[id]):[];
- try{const v=JSON.parse(localStorage.getItem(KEY)||"null");
-  if(v){s.sel=ids(v.sel);s.base=ids(v.base);s.mix=ids(v.mix);s.mix3=!!v.mix3;
-   if(v.f&&typeof v.f==="object")for(const k in DEFF)if(Array.isArray(DEFF[k])&&Array.isArray(v.f[k]))s.f[k]=v.f[k];
-   if(s.f.light.length!==2)s.f.light=[0,100];if(!s.f.pig.length)s.f.pig=["any"];if(!s.f.gran.length)s.f.gran=["any"];if(!s.f.inf.length)s.f.inf=["inc"];if(!s.f.avail.length)s.f.avail=["cur"];
-   return s}
-  // earlier versions stored a single-brand palette by paint name
-  const old=JSON.parse(localStorage.getItem("dswheel:public:v1")||"null");
-  if(old){const m=a=>Array.isArray(a)?a.map(n=>"ds:"+n).filter(id=>byId[id]):[];s.sel=m(old.sel);s.base=m(old.base);s.mix=m(old.mix);s.mix3=!!old.mix3}
- }catch(e){}
+const blank=()=>({sel:[],base:[],mix:[],mix3:false,f:clone(DEFF)});
+// one medium's saved state; paint ids are checked against the data once that medium loads
+function clean(v){const s=blank();if(!v||typeof v!=="object")return s;
+ const ids=a=>Array.isArray(a)?a.filter(id=>typeof id==="string"):[];
+ s.sel=ids(v.sel);s.base=ids(v.base);s.mix=ids(v.mix);s.mix3=!!v.mix3;if(Array.isArray(v.sw))s.sw=v.sw.filter(c=>typeof c==="string").slice(0,6);
+ if(v.f&&typeof v.f==="object")for(const k in DEFF)if(Array.isArray(DEFF[k])&&Array.isArray(v.f[k]))s.f[k]=v.f[k];
+ if(s.f.light.length!==2)s.f.light=[0,100];if(!s.f.pig.length)s.f.pig=["any"];if(!s.f.gran.length)s.f.gran=["any"];if(!s.f.inf.length)s.f.inf=["inc"];if(!s.f.avail.length)s.f.avail=["cur"];
  return s}
-let st=load();
-function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+// S: everything saved. shown: the mediums in the switcher. onboarded: the first-visit questions are done.
+// news: someone who used the watercolor-only app hasn't yet dismissed the note about the new mediums.
+function load(){const S={medium:"watercolor",shown:[],media:{},onboarded:false,news:false,hinted:false};
+ try{const v=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(v&&typeof v==="object"){if(MBY[v.medium])S.medium=v.medium;
+   if(Array.isArray(v.shown))S.shown=MEDIA.map(m=>m.key).filter(k=>v.shown.includes(k));
+   for(const m of MEDIA)if(v.media&&v.media[m.key])S.media[m.key]=clean(v.media[m.key]);
+   S.onboarded=!!v.onboarded;S.news=!!v.news;S.hinted=!!v.hinted;return S}
+  // the watercolor-only app kept one palette; it becomes the Watercolor palette
+  let w=JSON.parse(localStorage.getItem("wpb:v2")||"null");
+  // earlier versions stored a single-brand palette by paint name
+  if(!w){const old=JSON.parse(localStorage.getItem("dswheel:public:v1")||"null");
+   if(old){const m=a=>Array.isArray(a)?a.map(n=>"ds:"+n):[];w={sel:m(old.sel),base:m(old.base),mix:m(old.mix),mix3:!!old.mix3}}}
+  if(w){S.media.watercolor=clean(w);S.shown=["watercolor"];S.onboarded=true;S.news=true;S.hinted=true}
+ }catch(e){}
+ return S}
+const S=load();
+let st=S.media[S.medium]??=blank();
+// the switcher shows a few colors from each palette, so keep them with the palette
+function save(){if(P.length)st.sw=st.sel.slice(0,6).map(id=>byId[id]?.rgb).filter(Boolean);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const inPal=p=>st.sel.includes(p.id);
 // Staining and granulation filled in from the pigment (see tools/infer_properties.py) are
 // inferred, not the maker's claim. "Brand-stated only" treats them as unknown.
@@ -76,10 +94,12 @@ function hideTip(){tip.style.opacity=0}
 addEventListener("scroll",hideTip,{passive:true});
 // small confirmation bubble just above whatever was used to add the paint
 const toastEl=$("toast");let toastTimer;
-function toast(msg,rect){toastEl.textContent=msg;const w=toastEl.offsetWidth||110;
+function toast(msg,rect,ms=1400){toastEl.textContent=msg;const w=toastEl.offsetWidth||110;
  const x=rect?Math.max(w/2+8,Math.min(innerWidth-w/2-8,rect.left+rect.width/2)):innerWidth/2;
  let y=rect?rect.top-42:innerHeight/2;if(y<8)y=rect.bottom+8;
- toastEl.style.left=x+"px";toastEl.style.top=y+"px";toastEl.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),1400)}
+ toastEl.style.left=x+"px";toastEl.style.top=y+"px";toastEl.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),ms)}
+// the first paint anyone adds also says where it went
+function paintAdded(rect){toast(S.hinted?"Paint added":"Added. Your paints are under Palette",rect,S.hinted?1400:3200);if(!S.hinted){S.hinted=true;save()}}
 // client coordinates to SVG user units, and how many user units one CSS pixel spans
 function svgPt(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
 const unitsPerPx=svg=>248/svg.getBoundingClientRect().width;
@@ -97,17 +117,19 @@ const makerTxt=p=>[p.bs,p.pig&&p.pig.join(", ")].filter(Boolean).join(" · ");
 const numsOf=p=>`Hue ${p.h.toFixed(1)}°, chroma ${p.C.toFixed(1)}, lightness ${p.L}`;
 const srcNote=p=>p.src==="maker"?"Color from the manufacturer's published values, not yet measured.":p.src==="chart"?"Color measured from a printed color chart.":"";
 const EXT='<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>';
-const extLink=p=>`<a class="ext" href="${esc(p.url||BRANDS[p.brand].url)}" target="_blank" rel="noopener" title="View on artistpigments.org" aria-label="View ${esc(p.n)} on artistpigments.org (opens in a new tab)">${EXT}</a>`;
+const hostOf=u=>{try{return new URL(u).hostname.replace(/^www\./,"")}catch(e){return"the source"}};
+const extLink=p=>{const u=p.url||BRANDS[p.brand].url;if(!u)return"";const h=hostOf(u);return`<a class="ext" href="${esc(u)}" target="_blank" rel="noopener" title="View on ${esc(h)}" aria-label="View ${esc(p.n)} on ${esc(h)} (opens in a new tab)">${EXT}</a>`};
 function describe(p){const w=fails(p),s=srcNote(p),n=infNote(p);return `<b>${esc(p.n)}</b> ${extLink(p)} <span class="brandnote">${esc(makerTxt(p))}</span>${inPal(p)?" · in your palette":""}<br>${numsOf(p)}<br>${propsOf(p)}${n?`<br><span class="note">${n}</span>`:""}${s?"<br>"+s:""}${w.length?`<br>Outside your filters: ${w.join(", ")}`:""}`}
 const DEFAULT_INFO=()=>noHover.matches?"Tap near a dot to see its details and add it to your palette.":"Hover a dot for its details. Click it to add it to your palette.";
-function toggle(id,rect){const i=st.sel.indexOf(id);if(i>=0){st.sel.splice(i,1);st.mix=st.mix.filter(m=>m!==id)}else{st.sel.push(id);toast("Paint added",rect)}save();render()}
+function toggle(id,rect){const i=st.sel.indexOf(id);if(i>=0){st.sel.splice(i,1);st.mix=st.mix.filter(m=>m!==id)}else{st.sel.push(id);paintAdded(rect)}save();render()}
 const wheel=$("wheel"),allg=$("allg"),focusg=$("focusg");
-P.forEach(p=>{const c=el("circle",{cx:p.x,cy:p.y,r:1.4,fill:p.rgb,stroke:"var(--paper)","stroke-width":.3,tabindex:0,role:"button","aria-label":`${p.n}, ${p.bs}`,style:"cursor:pointer"},allg);p.dot=c;c._p=p;
+// each medium builds its dots once, when its data first loads
+function makeDot(p){const c=el("circle",{cx:p.x,cy:p.y,r:1.4,fill:p.rgb,stroke:"var(--paper)","stroke-width":.3,tabindex:0,role:"button","aria-label":`${p.n}, ${p.bs}`,style:"cursor:pointer"});p.dot=c;c._p=p;
  c.addEventListener("pointerenter",e=>{if(e.pointerType!=="mouse")return;showTip(`${p.n} · ${p.bs}`,e);info.innerHTML=describe(p)});
  c.addEventListener("pointermove",e=>{if(e.pointerType==="mouse")moveTip(e)});
  c.addEventListener("pointerleave",hideTip);
  c.addEventListener("focus",()=>{if(!touchy())info.innerHTML=describe(p)});
- c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle(p.id,c.getBoundingClientRect());info.innerHTML=describe(p)}})});
+ c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle(p.id,c.getBoundingClientRect());info.innerHTML=describe(p)}})}
 wheel.addEventListener("click",e=>{
  if(!touchy()){const p=e.target._p;if(p){toggle(p.id,{left:e.clientX,width:0,top:e.clientY-6,bottom:e.clientY});info.innerHTML=describe(p)}return}
  // fingers are much bigger than the dots: take every visible dot near the tap, closest first
@@ -144,6 +166,12 @@ function groups(){const inBrands=P.filter(p=>!st.f.brand.length||st.f.brand.incl
   inf:[["inc","Include inferred"],["exc","Brand-stated only"]],
   series:[...new Set(inBrands.map(p=>p.series).filter(Boolean))].sort(seriesSort).map(s=>[s,s]),
   avail:[["cur","In production"],["any","Include discontinued"]]}}
+// A filter only shows when this medium's data has something for it: granulation means
+// little for oil, and a brand that doesn't publish series has nothing to pick from.
+const HAS={brand:()=>DATA.brands.length>1,lf:p=>p.lf,pig:p=>p.single!=null,trans:p=>p.trans,stain:p=>p.stain,gran:p=>p.gran,
+ inf:p=>inferred(p,"stain")||inferred(p,"gran"),series:p=>p.series,avail:p=>p.disc};
+function showGroups(){document.querySelectorAll(".chips").forEach(box=>{const k=box.dataset.key,on=k==="brand"?HAS.brand():P.some(HAS[k]);
+ box.closest(".fgroup").hidden=!on;if(!on)st.f[k]=clone(DEFF[k])})}
 function buildChips(){const G=groups();
  st.f.series=st.f.series.filter(s=>G.series.some(o=>o[0]===s));
  document.querySelectorAll(".chips").forEach(box=>{const key=box.dataset.key,many=box.dataset.mode==="many";box.innerHTML="";
@@ -174,14 +202,12 @@ const BINS=360,SEG=16,DTH=2*Math.PI/BINS;
 function rgb2lab(c){const l=c.map(v=>{v/=255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4});
  const X=(l[0]*.4124+l[1]*.3576+l[2]*.1805)/.95047,Y=l[0]*.2126+l[1]*.7152+l[2]*.0722,Z=(l[0]*.0193+l[1]*.1192+l[2]*.9505)/1.08883;
  const f=t=>t>0.008856?Math.cbrt(t):7.787*t+16/116;return[116*f(Y)-16,500*(f(X)-f(Y)),200*(f(Y)-f(Z))]}
-P.forEach(p=>{p.lat=mixbox.rgbToLatent(p.arr)});
 // Mixbox works inside the sRGB gamut, so vivid paints get pulled inward at the ends of the path.
 // Shift the simulated path by the endpoint error so it starts and ends on each paint's measured color.
 function mixPath(A,B,n){const z=new Array(mixbox.LATENT_SIZE),M=[];
  for(let s=0;s<=n;s++){const t=s/n;for(let j=0;j<z.length;j++)z[j]=A.lat[j]*(1-t)+B.lat[j]*t;M.push(rgb2lab(mixbox.latentToRgb(z)))}
  const e0=[A.L-M[0][0],A.a-M[0][1],A.b-M[0][2]],e1=[B.L-M[n][0],B.a-M[n][1],B.b-M[n][2]];
  return M.map((m,s)=>{const t=s/n;return m.map((v,k)=>v+(1-t)*e0[k]+t*e1[k])})}
-const curveCache=new Map();
 function curve(A,B){const k=A.i<B.i?A.i*65536+B.i:B.i*65536+A.i;let c=curveCache.get(k);if(c)return c;
  const[a,b]=A.i<B.i?[A,B]:[B,A];c=new Float64Array((SEG+1)*2);
  mixPath(a,b,SEG).forEach((L,s)=>{c[s*2]=L[1];c[s*2+1]=L[2]});
@@ -199,9 +225,7 @@ function envPts(env){let o=[];for(let k=0;k<BINS;k++){const th=(k+.5)*DTH;o.push
 // the full range only needs the most chromatic paints in each hue sector
 function envPool(pool){const sec=new Map();pool.forEach(p=>{const k=Math.floor(p.h/15);(sec.get(k)||sec.set(k,[]).get(k)).push(p)});
  const pick=[];sec.forEach(v=>v.sort((a,b)=>b.C-a.C).slice(0,4).forEach(p=>pick.push(p)));return envOf(pick)}
-const poolCache=new Map();
 function poolArea(pool){const key=pool.map(p=>p.i).join(",");if(!poolCache.has(key))poolCache.set(key,envArea(envPool(pool)));return poolCache.get(key)}
-const FULL=poolArea(P);
 let reachKey="",reachMemo={};
 function render(){
  const sel=st.sel.map(id=>byId[id]);
@@ -222,7 +246,7 @@ function render(){
  $("palBadge").textContent=sel.length;$("palBadge").hidden=!sel.length;
  const R=(k,f)=>document.querySelectorAll(`[data-r="${k}"]`).forEach(f);
  // reach shows in both Pigments and Palette
- const pv=Math.min(100,Math.round(A/FULL*100));R("pct",e=>e.textContent=pv+"%");R("pctBar",e=>e.style.width=pv+"%");
+ const pv=FULL?Math.min(100,Math.round(A/FULL*100)):0;R("pct",e=>e.textContent=pv+"%");R("fullabel",e=>e.textContent=`of the full ${cur.name.toLowerCase()} range across all brands`);R("pctBar",e=>e.style.width=pv+"%");
  const pool=P.filter(passes),fA=poolArea(pool),selOk=sel.filter(passes),Ef=M.Ef??=(selOk.length===sel.length?E:envOf(selOk)),sA=M.sA??=(selOk.length===sel.length?A:envArea(Ef)),out=sel.length-selOk.length;
  const fv=fA?Math.min(100,Math.round(sA/fA*100)):0;R("fpct",e=>e.textContent=fA?fv+"%":"–");R("fpctBar",e=>e.style.width=fv+"%");
  // the second number only counts your paints that meet the filters; say so when that's not all of them
@@ -247,10 +271,11 @@ function render(){
  if(sel.length<2)gu.innerHTML='<li class="fine">Add at least two paints to see your outline and what would widen it.</li>';
  else if(selOk.length<2)gu.innerHTML='<li class="fine">Fewer than two of your paints meet your filters, so there\'s no filtered reach to widen yet.</li>';
  else if(!gains.length)gu.innerHTML='<li class="fine">Nothing that meets your filters adds more than half a percent.</li>';
- gains.forEach(o=>gu.appendChild(addRow(o.p,"",`+${o.g.toFixed(1)}%`,r=>toast("Paint added",r))));
+ gains.forEach(o=>gu.appendChild(addRow(o.p,"",`+${o.g.toFixed(1)}%`,r=>paintAdded(r))));
  const pu=$("pal");pu.innerHTML="";
  [...sel].sort(hueSort).forEach(p=>{const parts=[];if(A){const loss=(M.loss??={})[p.id]??=(A-envArea(envOf(sel.filter(q=>q!==p))))/A*100;if(loss>=0.1)parts.push(`Sets the edge · removing it loses ${loss.toFixed(1)}%`)}const w=fails(p);if(w.length)parts.push("Outside your filters: "+w.join(", "));pu.appendChild(palRow(p,parts.join("<br>")))});
- if(!sel.length)pu.innerHTML='<li class="fine">Your palette is empty. Add paints from the wheel or the search in Pigments.</li>';
+ if(!sel.length){pu.innerHTML=`<li class="fine startli">Your ${cur.name.toLowerCase()} palette is empty. Add paints from the wheel or the search in Pigments, or start with a basic set: a warm and a cool of each primary.<br><button class="starter">Add a basic set</button></li>`;
+  pu.querySelector(".starter").onclick=e=>addStarter(e.currentTarget.getBoundingClientRect())}
  search();drawFocus()}
 const q=$("q"),res=$("results");
 function search(){const v=q.value.trim().toLowerCase();res.innerHTML="";if(!v)return;
@@ -258,7 +283,7 @@ function search(){const v=q.value.trim().toLowerCase();res.innerHTML="";if(!v)re
  // paints already in the palette are left out; ones outside the filters come last, with the reason
  const m=P.filter(p=>!inPal(p)&&hit(p)).map(p=>({p,w:fails(p)})).sort((a,b)=>(a.w.length>0)-(b.w.length>0)||a.p.n.localeCompare(b.p.n)).slice(0,40);
  if(!m.length){res.innerHTML='<li class="fine">No paints outside your palette match that search.</li>';return}
- m.forEach(({p,w})=>res.appendChild(addRow(p,w.length?"outside filters: "+w.join(", "):"","",()=>{const r=q.getBoundingClientRect();q.value="";search();toast("Paint added",r);if(!touchy())q.focus()})))}
+ m.forEach(({p,w})=>res.appendChild(addRow(p,w.length?"outside filters: "+w.join(", "):"","",()=>{const r=q.getBoundingClientRect();q.value="";search();paintAdded(r);if(!touchy())q.focus()})))}
 q.addEventListener("input",search);
 ["showMine","showAll","showLab","showBase"].forEach(id=>$(id).addEventListener("change",render));
 $("setBase").onclick=()=>{st.base=[...st.sel];save();render()};
@@ -280,8 +305,9 @@ function renderMix(){
  st.mix=st.mix.filter(id=>st.sel.includes(id));if(st.mix3)st.mix=st.mix.slice(0,3);
  const full=st.mix3&&st.mix.length>=3;$("mixClear").disabled=!st.mix.length;
  $("mix2btn").setAttribute("aria-pressed",!st.mix3);$("mix3btn").setAttribute("aria-pressed",!!st.mix3);
- $("mixHelp").textContent=st.mix3?`Pick three paints to see every color they can make together. ${verb()} any dot for its color and recipe.`:`Pick two or more paints to see the mixing path between every pair. ${verb()} a dot on the chart, or anywhere along a strip, for the mixed color and its ratio.`;
+ $("mixHelp").textContent=(st.mix3?`Pick three paints to see every color they can make together. ${verb()} any dot for its color and recipe.`:`Pick two or more paints to see the mixing path between every pair. ${verb()} a dot on the chart, or anywhere along a strip, for the mixed color and its ratio.`)+(cur.white?" Mixes here leave out white: add it on your palette to lighten.":"");
  if(!st.sel.length)box.innerHTML='<li class="fine">Your palette is empty. Add paints in Pigments first.</li>';
+ else if(st.sel.length<2)box.insertAdjacentHTML("beforeend",'<li class="fine" style="grid-column:1/-1">Add at least one more paint to your palette to see how they mix.</li>');
  st.sel.map(id=>byId[id]).sort(hueSort).forEach(p=>{const on=st.mix.includes(p.id),li=document.createElement("li"),b=document.createElement("button");
   b.className="pchip";b.setAttribute("aria-pressed",on);b.disabled=full&&!on;
   b.setAttribute("aria-label",`${p.n}, ${p.bs}${p.gran==="G"?(inferred(p,"gran")?", granulating (inferred)":", granulating"):""}`);b.title=p.n;
@@ -393,7 +419,7 @@ ${c.near.length?`<div class="sh-near"><span class="flabel">Also near your tap</s
 <div class="ratio" id="mixBar">${ps.map(p=>`<span style="background:${p.rgb}"></span>`).join("")}</div>
 <div class="rec">${ps.map((p,k)=>`<span class="sw" style="background:${p.rgb}"></span><span class="nm">${esc(nameIn(p,ps))} <span class="note" id="pp${k}"></span></span><span class="pc" id="pc${k}"></span>${ps.length===3?`<input type="range" min="0" max="100" step="5" data-k="${k}" aria-label="Share of ${esc(p.n)}">`:""}`).join("")}</div>
 ${ps.length===2?`<div class="two"><span class="sw" style="background:${ps[0].rgb}"></span><input type="range" min="0" max="100" step="5" data-k="1" aria-label="Share of ${esc(ps[1].n)}"><span class="sw" style="background:${ps[1].rgb}"></span></div>`:""}
-<p class="fine" style="margin:0">${gran.length?`${esc(gran.map(p=>p.n+(inferred(p,"gran")?" (inferred)":"")).join(" and "))} granulate${gran.length===1?"s":""}, so expect texture. `:""}Drag to adjust. Assumes equal strength, so a staining paint takes over faster on paper.</p>`;
+<p class="fine" style="margin:0">${gran.length?`${esc(gran.map(p=>p.n+(inferred(p,"gran")?" (inferred)":"")).join(" and "))} granulate${gran.length===1?"s":""}, so expect texture. `:""}Drag to adjust. Assumes equal strength, so ${cur.strong||"a strong paint takes over faster in real mixes"}.</p>`;
   sheet.querySelectorAll("input[type=range]").forEach(r=>r.addEventListener("input",()=>setShare(+r.dataset.k,+r.value)));
   updateMixSheet()}
  sheet.querySelector(".sh-close").onclick=closeSheet}
@@ -439,5 +465,113 @@ $("themeBtn").onclick=()=>{const t=$("themeBtn").dataset.t||"auto";setTheme(THEM
 setTheme(document.documentElement.dataset.theme||"auto");
 
 const _render=render;render=function(){_render();renderMix()};
-buildChips();render();
+
+// ---- starter set: a warm and a cool of each primary ----
+// Target CIELAB hue angles of masstones: lemon and deep yellow, scarlet and rose, ultramarine and a greener blue.
+const STARTER=[97,80,38,14,290,255];
+const hueGap=(a,b)=>Math.abs(((a-b)%360+540)%360-180);
+// the most chromatic paint near each target hue, favoring single pigments and good lightfastness
+function fitSet(ps,win,partial){const out=[];let tot=0;
+ for(const h of STARTER){let best=null,bs=-Infinity;
+  for(const p of ps){if(out.includes(p))continue;const d=hueGap(p.h,h);if(d>win)continue;const sc=p.C-2.5*d+(p.single?8:0)-(p.lf>2?40:0);if(sc>bs){bs=sc;best=p}}
+  if(best){out.push(best);tot+=bs}else if(!partial)return null}
+ return{out,tot}}
+// one brand's set when a brand covers all six well, otherwise the best across brands
+function starterSet(){const inProd=P.filter(p=>!p.disc),ok=inProd.filter(passes),pool=ok.length>=6?ok:inProd;
+ let best=null;for(const b of DATA.brands){const r=fitSet(pool.filter(p=>p.brand===b.key),14);if(r&&(!best||r.tot>best.tot))best=r}
+ return(best||fitSet(pool,14)||fitSet(pool,30,true)).out}
+function addStarter(rect){const add=starterSet().filter(p=>!inPal(p));add.forEach(p=>st.sel.push(p.id));save();render();
+ toast(add.length?`Added ${add.length} paint${add.length===1?"":"s"}`:"Those paints are already in your palette",rect,2200)}
+
+// ---- mediums: each has its own paints, palette, stored palette, filters and mixes ----
+const loading={},blankMedium=m=>({m,data:null,B:{},P:[],byId:{},FULL:0,curveCache:new Map(),poolCache:new Map()});
+function prep(m,data){const B=Object.fromEntries((data.brands||[]).map(b=>[b.key,b]));
+ const ps=data.paints.filter(d=>d&&d.id&&[d.L,d.a,d.b].every(Number.isFinite)).map((d,i)=>({...d,i,n:d.name,bs:B[d.brand]?.short||d.brand||"",C:Math.hypot(d.a,d.b),h:((Math.atan2(d.b,d.a)*180/Math.PI)+360)%360,rgb:lab2rgb(d.L,d.a,d.b),arr:lab2arr(d.L,d.a,d.b),x:d.a,y:-d.b,lf:d.lf||0,stain:d.stain||0,gran:d.gran||"",trans:d.trans||"",series:d.series||""}));
+ ps.forEach(p=>{p.lat=mixbox.rgbToLatent(p.arr);makeDot(p)});
+ return{m,data:{...data,brands:data.brands||[]},B,P:ps,byId:Object.fromEntries(ps.map(p=>[p.id,p])),FULL:null,curveCache:new Map(),poolCache:new Map()}}
+// a missing file means that medium's paints aren't ready yet
+function getMedium(m){return loading[m.key]??=fetch(m.file+(ASSET_V?"?v="+ASSET_V:"")).then(r=>{if(r.status===404)return null;if(!r.ok)throw new Error(r.status+" "+r.statusText);return r.json()})
+ .then(data=>data&&Array.isArray(data.paints)&&data.paints.length?prep(m,data):blankMedium(m)).catch(err=>{delete loading[m.key];throw err})}
+const loaded={};
+let want=null;
+function useMedium(key,{push=false}={}){const m=MBY[key]||MEDIA[0];want=m.key;
+ if(!S.shown.includes(m.key))S.shown=MEDIA.map(x=>x.key).filter(k=>k===m.key||S.shown.includes(k));
+ if(m.key!=="watercolor"&&S.news)S.news=false;
+ closeSheet();closeMenu();setURL(m.key,push);
+ if(!loaded[m.key]){allg.replaceChildren();info.textContent="Loading paints…";$("mediumName").textContent=m.name;mBtn.dataset.m=m.key}
+ return getMedium(m).then(e=>{loaded[m.key]=e;if(want===m.key)apply(e)}).catch(err=>{if(want!==m.key)return;
+  info.innerHTML=`<div class="loaderr">Couldn't load the ${esc(m.name.toLowerCase())} paints (${esc(String(err.message||err))}). If you opened this file directly, serve the folder instead, e.g. <code>python3 -m http.server</code>.</div>`;console.error(err)})}
+function apply(e){cur=e.m;({B:BRANDS,P,byId,curveCache,poolCache}=e);DATA=e.data||{brands:[],paints:[]};
+ if(e.FULL==null)e.FULL=poolArea(P);FULL=e.FULL;
+ S.medium=cur.key;st=S.media[cur.key]??=blank();
+ if(P.length){const ok=id=>!!byId[id];st.sel=st.sel.filter(ok);st.base=st.base.filter(ok);st.mix=st.mix.filter(ok)}
+ mixFocus=null;reachKey="";reachMemo={};q.value="";
+ allg.replaceChildren(...P.map(p=>p.dot));
+ document.body.dataset.medium=cur.key;document.body.classList.toggle("nodata",!P.length);
+ wheel.setAttribute("aria-label",`Hue and chroma wheel of ${cur.name.toLowerCase()} paints`);
+ document.title=`${cur.name} · Palette Builder`;
+ $("soonTitle").textContent=`${cur.name} paints are on their way`;
+ $("soonText").textContent=`The ${cur.name.toLowerCase()} paint data isn't ready yet. Once it's added, you can browse ${cur.name.toLowerCase()} paints on the wheel, build a palette and see how they mix. Your other palettes are where you left them: switch mediums from the menu next to the title.`;
+ showGroups();buildChips();syncLight();render();info.textContent=DEFAULT_INFO();mediumUI();save()}
+
+// the medium is in the URL (?medium=oil), so links open it and Back returns to the last one
+const urlMedium=()=>{const k=new URLSearchParams(location.search).get("medium");return MBY[k]?k:null};
+function setURL(k,push){const u=new URL(location.href);u.searchParams.set("medium",k);if(u.href!==location.href)history[push?"pushState":"replaceState"](null,"",u)}
+addEventListener("popstate",()=>{const k=urlMedium()||"watercolor";if(k!==want)useMedium(k)});
+
+// ---- medium switcher: a pill next to the title opens the list ----
+const mBtn=$("mediumBtn"),mMenu=$("mediumMenu");
+const strip=k=>{const c=S.media[k]?.sw||[];return c.length?c.map(x=>`<span style="background:${x}"></span>`).join(""):""};
+function countTxt(k){if(loaded[k]&&!loaded[k].P.length)return"Paint data coming soon";const n=S.media[k]?.sel.length||0;return n?`${n} paint${n===1?"":"s"}`:"Empty palette"}
+function mediumUI(){mBtn.dataset.m=cur.key;$("mediumName").textContent=cur.name;mBtn.setAttribute("aria-label",`Medium: ${cur.name}. Switch medium`);
+ $("news").hidden=!S.news;if(!mMenu.hidden)drawMenu()}
+function drawMenu(){const others=MEDIA.filter(m=>!S.shown.includes(m.key));
+ const row=(m,mine)=>`<button class="mrow" data-m="${m.key}"${m===cur?' aria-current="true"':""}><span class="mdot" aria-hidden="true"></span><span class="mname">${m.name}<span class="note">${mine?countTxt(m.key):esc(m.about)}</span></span>${mine?`<span class="mstrip" aria-hidden="true">${strip(m.key)}</span>`:'<span class="plus" aria-hidden="true">+</span>'}</button>`;
+ mMenu.innerHTML=`<div class="mlist">${MEDIA.filter(m=>S.shown.includes(m.key)).map(m=>row(m,true)).join("")}</div>`+
+  (others.length?`<p class="mlabel">Add a medium</p><div class="mlist">${others.map(m=>row(m,false)).join("")}</div>`:"")+
+  `<div class="mfoot"><button class="link" data-act="start">Getting started</button></div>`;
+ mMenu.querySelectorAll(".mrow").forEach(b=>b.onclick=()=>{const k=b.dataset.m;closeMenu();if(k===cur.key)return;
+  useMedium(k,{push:true}).then(()=>{if(cur.key===k)toast(`Switched to ${cur.name}`,mBtn.getBoundingClientRect(),1800)})});
+ mMenu.querySelector("[data-act=start]").onclick=openOnboard}
+function openMenu(){drawMenu();mMenu.hidden=false;mBtn.setAttribute("aria-expanded","true");mMenu.querySelector(".mrow")?.focus()}
+function closeMenu(){if(mMenu.hidden)return;mMenu.hidden=true;mBtn.setAttribute("aria-expanded","false")}
+mBtn.onclick=()=>mMenu.hidden?openMenu():closeMenu();
+document.addEventListener("click",e=>{if(!mMenu.hidden&&!e.target.closest(".medium"))closeMenu()});
+addEventListener("keydown",e=>{if(e.key==="Escape"&&!mMenu.hidden){closeMenu();mBtn.focus()}});
+$("startAgain").onclick=openOnboard;
+$("newsClose").onclick=()=>{S.news=false;save();mediumUI()};
+$("newsOpen").onclick=e=>{e.stopPropagation();S.news=false;save();mediumUI();openMenu()};
+
+// ---- getting started: pick mediums, then start from a basic set or an empty palette ----
+const ob=$("onboard");let obPick=[],obKeys=[];
+function openOnboard(){closeMenu();obPick=S.onboarded?[...S.shown]:[linked].filter(Boolean);obStep1();if(!ob.open)ob.showModal()}
+function obStep1(){
+ ob.innerHTML=`<h2 id="obTitle" tabindex="-1" autofocus>What do you paint with?</h2><p class="fine obsub">Pick one or more. Each medium keeps its own palette, and you can add the others any time from the menu next to the title.</p>
+<div class="obgrid">${MEDIA.map(m=>`<button class="obcard" data-m="${m.key}" aria-pressed="${obPick.includes(m.key)}"><span class="mdot" aria-hidden="true"></span><b>${m.name}</b><span class="note">${esc(m.about)}</span></button>`).join("")}</div>
+<div class="obfoot"><button class="link" data-act="skip">${S.onboarded?"Cancel":"Just let me explore"}</button><button class="primary" data-act="next">Continue</button></div>`;
+ const next=ob.querySelector("[data-act=next]"),sync=()=>next.disabled=!obPick.length;sync();
+ ob.querySelectorAll(".obcard").forEach(b=>b.onclick=()=>{const k=b.dataset.m;obPick=obPick.includes(k)?obPick.filter(x=>x!==k):[...obPick,k];b.setAttribute("aria-pressed",obPick.includes(k));sync()});
+ next.onclick=obStep2;if(ob.open)ob.querySelector("h2").focus();
+ ob.querySelector("[data-act=skip]").onclick=()=>ob.close()}
+function obStep2(){const keys=MEDIA.map(m=>m.key).filter(k=>obPick.includes(k)),m=MBY[keys.includes(cur.key)?cur.key:keys[0]];
+ obKeys=keys;
+ ob.innerHTML=`<button class="link obback" data-act="back">‹ Back</button><h2 id="obTitle" tabindex="-1">Your ${m.name.toLowerCase()} palette</h2><p class="fine obsub">Loading ${m.name.toLowerCase()} paints…</p>`;
+ ob.querySelector("[data-act=back]").onclick=obStep1;ob.querySelector("h2").focus();
+ useMedium(m.key,{push:true}).then(()=>{if(!ob.open||cur!==m||!ob.querySelector(".obback"))return;
+  const more=keys.length>1?` Your ${keys.filter(k=>k!==m.key).map(k=>MBY[k].name.toLowerCase()).join(" and ")} palette${keys.length>2?"s are":" is"} in the menu next to the title.`:"";
+  if(!P.length){ob.querySelector(".obsub").textContent=`The ${m.name.toLowerCase()} paint data isn't ready yet, so there's nothing to pick from. You can look around in the meantime.${more}`;
+   ob.insertAdjacentHTML("beforeend",'<div class="obfoot"><span></span><button class="primary" data-act="done">Got it</button></div>');ob.querySelector("[data-act=done]").onclick=()=>finish(false);return}
+  const set=starterSet(),has=st.sel.length>0,brands=[...new Set(set.map(p=>p.bs))];
+  ob.querySelector(".obsub").textContent=(has?`You already have ${st.sel.length} paint${st.sel.length===1?"":"s"} here. Add a basic set, or keep your palette as it is.`:"How would you like to start?")+more;
+  ob.insertAdjacentHTML("beforeend",`<div class="obgrid two"><button class="obcard" data-act="set"><span class="obsw" aria-hidden="true">${set.map(p=>`<span style="background:${p.rgb}" title="${esc(p.n)}"></span>`).join("")}</span><b>${has?"Add":"Start with"} a basic set</b><span class="note">A warm and a cool of each primary, so you can mix most colors right away${brands.length===1?`, all from ${esc(brands[0])}`:""}: ${esc(set.map(p=>p.n).join(", "))}.</span></button>
+<button class="obcard" data-act="empty"><span class="obsw empty" aria-hidden="true"></span><b>${has?"Keep my palette":"Start empty"}</b><span class="note">${has?"Leave your paints as they are.":"Pick paints yourself on the color wheel."}</span></button></div>`);
+  ob.querySelector("[data-act=set]").onclick=()=>finish(true);ob.querySelector("[data-act=empty]").onclick=()=>finish(false)})}
+function finish(withSet){S.onboarded=true;S.news=false;S.shown=MEDIA.map(m=>m.key).filter(k=>obKeys.includes(k)||k===cur.key);ob.close();setTab("pigments");history.replaceState(null,"",location.pathname+location.search+"#pigments");
+ if(withSet)addStarter();else save();mediumUI()}
+// closing without finishing (Esc, or "Just let me explore") still counts as done, with every medium in the menu
+ob.addEventListener("close",()=>{if(S.onboarded)return;S.onboarded=true;S.shown=MEDIA.map(m=>m.key);save();mediumUI()});
+
+// a link to one medium (?medium=oil) preselects it for someone new
+const linked=urlMedium();
+useMedium(linked||S.medium).then(()=>{if(!S.onboarded)openOnboard()});
 }

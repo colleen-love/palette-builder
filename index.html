@@ -6,20 +6,23 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F3F1EC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#151618" media="(prefers-color-scheme: dark)">
-<meta name="description" content="Select watercolor paints on a color wheel, build a palette and see how its paints mix.">
+<meta name="description" content="Select watercolor, gouache, oil or acrylic paints on a color wheel, build a palette for each medium and see how its paints mix.">
 <script>try{const t=localStorage.getItem("wpb:theme")||localStorage.getItem("dswheel:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
-<title>Watercolor Palette Builder</title>
+<title>Palette Builder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
 <!-- bump ?v= when these files change so browsers fetch fresh copies -->
-<link rel="stylesheet" href="css/styles.css?v=infer2">
+<link rel="stylesheet" href="css/styles.css?v=media2">
 </head>
 <body data-tab="pigments">
 <header class="top">
 <div class="seg theme" role="group" aria-label="Color theme"><button data-t="auto">Auto</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div>
 <button class="themeBtn" id="themeBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"></svg></button>
-<h1>Watercolor Palette Builder</h1>
+<div class="titlerow"><h1>Palette Builder</h1>
+<div class="medium"><button class="mpill" id="mediumBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="mediumMenu" data-m="watercolor"><span class="mdot" aria-hidden="true"></span><span id="mediumName">Watercolor</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
+<div class="mmenu" id="mediumMenu" hidden></div></div></div>
+<div class="news" id="news" hidden><p><b>New: gouache, oil and acrylic.</b> Each medium keeps its own palette, and your watercolor palette is just where you left it. <button class="link" id="newsOpen" type="button">Switch mediums</button> from the menu next to the title.</p><button class="x" id="newsClose" type="button" aria-label="Dismiss">×</button></div>
 <p class="lede">Select paints on the color wheel and add them to your palette. Once added, mix them together in the Mixing section.</p>
 </header>
 
@@ -30,6 +33,7 @@
 </nav>
 
 <main class="page">
+<section class="card soon" id="soon" aria-labelledby="soonTitle"><h2 id="soonTitle">Paints are on their way</h2><p id="soonText"></p></section>
 <section id="pigments" class="view" aria-labelledby="pigH">
 <div class="vhead"><h2 id="pigH">Pigments</h2></div>
 <div class="pgrid">
@@ -56,7 +60,7 @@
 <p class="fcount" id="fcount"></p>
 </div>
 <div class="card wheelcard">
-<svg id="wheel" viewBox="-124 -124 248 248" role="img" aria-label="Hue and chroma wheel of watercolor paints">
+<svg id="wheel" viewBox="-124 -124 248 248" role="img" aria-label="Hue and chroma wheel of paints">
 <defs>
 <filter id="wet" x="-20%" y="-20%" width="140%" height="140%">
 <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="7" result="n"/>
@@ -75,7 +79,7 @@
 </div>
 <div class="card reachcard">
 <h3>Reach</h3>
-<div class="meter"><div class="ml"><span class="big" data-r="pct"></span><span>of the full range across all brands</span></div><div class="track"><div class="fillbar" data-r="pctBar"></div></div></div>
+<div class="meter"><div class="ml"><span class="big" data-r="pct"></span><span data-r="fullabel">of the full range across all brands</span></div><div class="track"><div class="fillbar" data-r="pctBar"></div></div></div>
 <div class="meter"><div class="ml"><span class="big" data-r="fpct"></span><span data-r="flabel">of the range that meets your filters</span></div><div class="track"><div class="fillbar" data-r="fpctBar"></div></div></div>
 <p class="delta" data-r="fnote"></p>
 <p class="delta" data-r="delta"></p>
@@ -90,7 +94,7 @@
 <div class="side">
 <div class="card reachcard palreach">
 <h3>Reach</h3>
-<div class="meter"><div class="ml"><span class="big" data-r="pct"></span><span>of the full range across all brands</span></div><div class="track"><div class="fillbar" data-r="pctBar"></div></div></div>
+<div class="meter"><div class="ml"><span class="big" data-r="pct"></span><span data-r="fullabel">of the full range across all brands</span></div><div class="track"><div class="fillbar" data-r="pctBar"></div></div></div>
 <div class="meter"><div class="ml"><span class="big" data-r="fpct"></span><span data-r="flabel">of the range that meets your filters</span></div><div class="track"><div class="fillbar" data-r="fpctBar"></div></div></div>
 <p class="delta" data-r="fnote"></p>
 <p class="delta" data-r="delta"></p>
@@ -121,14 +125,16 @@
 </section>
 
 <footer class="fine">
-<p>Mixes are simulated with <a href="https://github.com/scrtwpns/mixbox">Mixbox</a> (Secret Weapons, CC BY-NC 4.0), the same pigment-mixing model artistpigments.org uses for its mixing paths, starting from each paint's measured masstone, the same color as its dot on the wheel. Real tinting strength isn't known, so a strong staining paint will dominate more on paper than here. Treat mixes as a preview and confirm on paper.</p>
-<p>Color data and paint properties: <a href="https://artistpigments.org/">artistpigments.org</a> (CC BY-NC 4.0), mostly handmade masstone samples; a few paints use the manufacturer's published values or a printed color chart, and say so. Lightfastness is converted from each brand's own scale (ASTM, AA–C, stars) to a common I–IV, and staining to non, semi or staining. Where a brand doesn't publish staining or granulation, the value is inferred from how other brands rate the same pigment and shown with a hollow dot (○) instead of a filled one (●). The Inferred filter can leave these out, and pigments that brands rate differently stay unknown. Price series are each brand's own. Reach is the area your palette covers in the a*b* plane, traced along the simulated mixing curve between every pair of your paints rather than straight lines. It's a guide, not a measurement. The wheel doesn't show lightness; use the Lightness filter (0 is black, 100 is white) to narrow by it. Not affiliated with any paint maker.</p>
+<p>Each medium (watercolor, gouache, oil and acrylic) has its own paints, palette, stored palette, filters and mixes. Switch between them from the menu next to the title. <button class="link" id="startAgain" type="button">Getting started</button></p>
+<p>Mixes are simulated with <a href="https://github.com/scrtwpns/mixbox">Mixbox</a> (Secret Weapons, CC BY-NC 4.0), the same pigment-mixing model artistpigments.org uses for its mixing paths, starting from each paint's measured masstone, the same color as its dot on the wheel. Real tinting strength isn't known, so a strong paint will dominate more in real mixes than here. Mixes leave out water and white. Treat mixes as a preview and confirm on paper or canvas.</p>
+<p>Color data and paint properties: <a href="https://artistpigments.org/">artistpigments.org</a> (CC BY-NC 4.0), mostly handmade masstone samples; a few paints use the manufacturer's published values or a printed color chart, and say so. Lightfastness is converted from each brand's own scale (ASTM, AA–C, stars) to a common I–IV, and staining to non, semi or staining. Filters only appear when the current medium's data has values for them. Where a watercolor brand doesn't publish staining or granulation, the value is inferred from how other brands rate the same pigment and shown with a hollow dot (○) instead of a filled one (●). The Inferred filter can leave these out, and pigments that brands rate differently stay unknown. Price series are each brand's own. Reach is the area your palette covers in the a*b* plane, traced along the simulated mixing curve between every pair of your paints rather than straight lines. It's a guide, not a measurement. The wheel doesn't show lightness; use the Lightness filter (0 is black, 100 is white) to narrow by it. Not affiliated with any paint maker.</p>
 </footer>
 </main>
 <div id="tip" aria-hidden="true"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="sheet" class="sheet" role="dialog" aria-labelledby="sheetTitle" hidden></div>
-<script src="js/mixbox.js?v=infer2"></script>
-<script src="js/app.js?v=infer2"></script>
+<dialog id="onboard" class="ob" aria-labelledby="obTitle"></dialog>
+<script src="js/mixbox.js?v=media2"></script>
+<script src="js/app.js?v=media2"></script>
 </body>
 </html>

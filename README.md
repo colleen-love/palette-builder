@@ -1,14 +1,17 @@
-# Watercolor Palette Builder
+# Palette Builder
 
 **[Try it out!](https://colleen-love.github.io/watercolor-palette-builder/)**
 
-Select paints on the color wheel and add them to your palette, then mix them together. The wheel places over a thousand artist watercolors from nine brands by hue angle and chroma, using measured masstone colors.
+Select paints on the color wheel and add them to your palette, then mix them together. There's one palette for each medium: watercolor, gouache, oil and acrylic. The watercolor wheel places over a thousand artist watercolors from nine brands by hue angle and chroma, using measured masstone colors.
 
-- **Pigments:** the wheel, with filters for brand, lightfastness, single pigment vs. mixture, transparency, staining, granulation, price series, availability and lightness. Search by name, brand or pigment code (e.g. `PB29`) to add a paint in one tap.
+- **Mediums:** switch from the menu next to the title. Each medium keeps its own palette, stored palette, filters and mixes, and the URL says which one is open (`?medium=oil`), so links and the Back button work. A medium whose paint data isn't there yet says so instead of showing an empty wheel.
+- **Getting started:** on a first visit the app asks which mediums you paint with, then offers to start from a basic set (a warm and a cool of each primary, from one brand where one covers all six) or an empty palette. "Getting started" in the medium menu and the footer opens it again. Anyone who used the watercolor-only version keeps their palette as the Watercolor palette and sees a one-time note about the new mediums.
+
+- **Pigments:** the wheel, with filters (each one appears only when the current medium's data has values for it) for brand, lightfastness, single pigment vs. mixture, transparency, staining, granulation, price series, availability and lightness. Search by name, brand or pigment code (e.g. `PB29`) to add a paint in one tap.
 - **Palette:** your paints, how much of the full color range they reach (the shaded wash on the wheel), which paints set its edge, and which additions would widen it most. You can store a palette and compare against it later.
 - **Mixing:** mixing paths between palette paints on the a\*b\* color plane, a strip per pair (textured where a paint granulates), or everything three paints can make together. Tap any dot or point along a strip for the mixed color, its percentages and a simple parts ratio, and drag to adjust it.
 
-On phones the three sections sit behind a bottom menu, the filters open from a button above the wheel, and tapping near a dot opens a sheet with its details and an Add button. Your palette, filters and theme are saved in your browser.
+On phones the three sections sit behind a bottom menu, the filters open from a button above the wheel, and tapping near a dot opens a sheet with its details and an Add button. Your palettes, filters and theme are saved in your browser.
 
 ## Files
 
@@ -16,13 +19,16 @@ On phones the three sections sit behind a bottom menu, the filters open from a b
 - `css/styles.css`: styles, including light and dark themes
 - `js/app.js`: the app
 - `js/mixbox.js`: [Mixbox](https://github.com/scrtwpns/mixbox) pigment mixing (CC BY-NC 4.0)
-- `data/paints.json`: every paint, with its brand, CIELAB color and properties
+- `data/paints.json`: every watercolor, with its brand, CIELAB color and properties
+- `data/gouache.json`, `data/oil.json`, `data/acrylic.json`: the other mediums, in the same format (not added yet)
 - `data/inference-report.md`: how well the staining and granulation inference matches the brands' own ratings
 - `tools/infer_properties.py`: fills in staining and granulation from the pigments
 
 The page loads `data/paints.json` with `fetch`, so opening `index.html` straight from disk won't work. Serve the folder instead, for example `python3 -m http.server`, and open http://localhost:8000.
 
 ## Data
+
+Each medium's file has the same shape as `data/paints.json`: a `brands` list (`key`, `name`, `short`, `url`) and a `paints` list. A paint needs `id` (unique), `brand` (a brand `key`), `name` and its CIELAB `L`, `a`, `b`. Everything else is optional: `single`, `pig`, `lf` and `lfRaw`, `trans` (T, ST, SO or O), `stain` and `gran` (with `stainSrc` / `granSrc`), `series`, `disc`, `src` and `url`. A filter only shows when at least one paint in that medium has a value for it, so oil without granulation data simply has no Granulation filter. The medium list, file names and short descriptions are in `MEDIA` at the top of `js/app.js`.
 
 - Color (CIELAB) and paint properties: [artistpigments.org](https://artistpigments.org/), licensed [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/), mostly handmade masstone samples. A few paints use the manufacturer's published values or a printed color chart; the app says so for those paints.
 - Lightfastness is converted from each brand's own scale (ASTM I–IV, AA–C, or stars) to a common I–IV for filtering, and staining to non-staining, semi-staining or staining. Each paint's original rating is kept in `lfRaw` and shown in the app. Price series are each brand's own and aren't comparable across brands.
@@ -34,4 +40,4 @@ Reach is the area your palette covers on the a\*b\* plane, traced along the simu
 
 Not affiliated with any paint maker. Mixbox and the artistpigments.org data are both licensed for non-commercial use, so keep this project non-commercial.
 
-When you change `css/`, `js/` or `data/`, update the `?v=` value on the three asset links in `index.html` (any new string works). Browsers cache these files, and the new value makes them fetch fresh copies; `app.js` reuses it for `data/paints.json`.
+When you change `css/`, `js/` or `data/` (including adding a medium's file), update the `?v=` value on the three asset links in `index.html` (any new string works). Browsers cache these files, and the new value makes them fetch fresh copies; `app.js` reuses it for the data files.

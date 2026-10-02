@@ -297,9 +297,17 @@ function search(){const v=q.value.trim().toLowerCase();res.innerHTML="";if(!v)re
  m.forEach(({p,w})=>res.appendChild(addRow(p,w.length?"outside filters: "+w.join(", "):"","",()=>{const r=q.getBoundingClientRect();q.value="";search();paintAdded(r);if(!touchy())q.focus()})))}
 q.addEventListener("input",search);
 ["showMine","showAll","showLab","showBase"].forEach(id=>$(id).addEventListener("change",render));
-$("setBase").onclick=()=>{st.base=[...st.sel];save();render()};
-$("reset").onclick=()=>{st.sel=[...st.base];save();render()};
-$("clearPal").onclick=()=>{st.sel=[];save();render()};
+const nPaints=n=>`${n} paint${n===1?"":"s"}`;
+const btnRect=e=>e.currentTarget.getBoundingClientRect();
+$("setBase").onclick=e=>{st.base=[...st.sel];save();render();toast(st.sel.length?`Stored ${nPaints(st.sel.length)}`:"Stored an empty palette",btnRect(e),1800)};
+$("reset").onclick=e=>{st.sel=[...st.base];st.mix=st.mix.filter(id=>st.sel.includes(id));save();render();toast(st.base.length?`Reset to your stored ${nPaints(st.base.length)}`:"Reset to your stored palette, which is empty",btnRect(e),1800)};
+$("clearPal").onclick=e=>{const n=st.sel.length;st.sel=[];st.mix=[];save();render();toast(n?`Cleared ${nPaints(n)}`:"Your palette is already empty",btnRect(e),1800)};
+// a link to this palette: its medium and paint ids (no id contains "|")
+function shareURL(){const u=new URL(location.href);u.search="";u.hash="palette";u.searchParams.set("medium",cur.key);u.searchParams.set("p",st.sel.join("|"));return u.href}
+$("sharePal").onclick=async e=>{const r=btnRect(e);if(!st.sel.length){toast("Add some paints to share first",r,1800);return}
+ const url=shareURL();
+ if(navigator.share&&touchy()){try{await navigator.share({title:`${cur.name} palette`,url})}catch(err){}return}
+ try{await navigator.clipboard.writeText(url);toast("Link to your palette copied",r,1800)}catch(err){prompt("Copy this link to share your palette:",url)}};
 
 // ---- mixing ----
 const TEX=`url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 .25  0 0 0 0 .22  0 0 0 0 .2  0 0 0 -2.6 1.35"/></filter><rect width="120" height="120" filter="url(#n)"/></svg>')}")`;
@@ -622,7 +630,32 @@ function finish(withSet){S.onboarded=true;S.news=false;S.shown=MEDIA.map(m=>m.ke
 // closing without finishing (Esc, or "Just let me explore") still counts as done, with every medium in the menu
 ob.addEventListener("close",()=>{if(S.onboarded)return;S.onboarded=true;S.shown=MEDIA.map(m=>m.key);save();mediumUI()});
 
+// ---- shared palettes: ?medium=oil&p=id|id replaces that medium's palette, asking first if it would lose paints ----
+const shDlg=$("shareDlg");
+const sharedIds=()=>{const v=new URLSearchParams(location.search).get("p");return v==null?null:v.split("|").filter(Boolean)};
+function dropShared(){const u=new URL(location.href);if(u.searchParams.has("p")){u.searchParams.delete("p");history.replaceState(null,"",u)}}
+function openShared(ids){dropShared();
+ const ok=[...new Set(ids)].filter(id=>byId[id]),lost=new Set(ids).size-ok.length;
+ if(!ok.length){toast("None of the paints in that shared palette were found",null,2600);return}
+ const same=(a,b)=>a.length===b.length&&a.every(id=>b.includes(id));
+ const take=store=>{shDlg.close();if(store)st.base=[...st.sel];st.sel=ok;st.mix=st.mix.filter(id=>ok.includes(id));save();render();
+  setTab("palette");history.replaceState(null,"","#palette");if(!phone.matches)$("palette").scrollIntoView();
+  toast(`Opened a shared palette of ${nPaints(ok.length)}${lost?` (${lost} not found)`:""}${store?" · yours is stored":""}`,null,2600)};
+ if(!st.sel.length||same(st.sel,ok)){take(false);return}
+ const stored=same(st.sel,st.base),n=st.sel.length,med=cur.name.toLowerCase();
+ shDlg.innerHTML=`<h2 id="shTitle" tabindex="-1">Open a shared palette?</h2>
+<div class="obsw" role="img" aria-label="${esc(ok.map(id=>byId[id].n).join(", "))}">${ok.map(id=>`<span style="background:${byId[id].rgb}" title="${esc(byId[id].n)}"></span>`).join("")}</div>
+<p class="fine obsub">Someone shared ${nPaints(ok.length)} with you${lost?` (${lost} more ${lost===1?"isn't":"aren't"} in this app's ${med} paints)`:""}. Opening it clears your current ${med} palette of ${nPaints(n)}. ${stored?"Your palette is stored, so Reset to stored brings it back.":`Store it first to get it back later with Reset to stored${st.base.length?" (this replaces the palette you stored before)":""}.`}</p>
+<div class="shbtns">${stored?'<button class="primary" data-act="open">Open shared palette</button>':'<button class="primary" data-act="store">Store mine and open</button><button data-act="open">Open without storing</button>'}<button class="link" data-act="keep">Keep my palette</button></div>`;
+ shDlg.querySelector("[data-act=open]").onclick=()=>take(false);
+ shDlg.querySelector("[data-act=store]")?.addEventListener("click",()=>take(true));
+ shDlg.querySelector("[data-act=keep]").onclick=()=>shDlg.close();
+ shDlg.showModal();shDlg.querySelector("h2").focus()}
+
 // a link to one medium (?medium=oil) preselects it for someone new
 const linked=urlMedium();
-useMedium(linked||S.medium).then(()=>{if(!S.onboarded)openOnboard()});
+useMedium(linked||S.medium).then(()=>{const ids=sharedIds();
+ // a shared palette skips the first-visit questions; Getting started in the menu still has them
+ if(ids&&linked&&cur.key===linked&&P.length){if(!S.onboarded){S.onboarded=true;save();mediumUI()}openShared(ids);return}
+ dropShared();if(!S.onboarded)openOnboard()});
 }

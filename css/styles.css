@@ -304,6 +304,9 @@ body.nodata .view{display:none!important}
 .obfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
 .obfoot .primary{width:auto;padding:0 28px}
 .obback{margin-bottom:10px}
+.shbtns{display:flex;flex-direction:column;gap:8px;margin-top:18px}
+.shbtns button:not(.primary):not(.link){min-height:44px;border-radius:12px}
+.shbtns .link{align-self:center;margin-top:4px}
 @media (max-width:600px){.ob{padding:20px 16px}.obgrid{grid-template-columns:1fr}.obgrid:not(.two) .obcard{min-height:0;flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:10px}.obgrid:not(.two) .obcard .note{flex-basis:100%}.obgrid:not(.two) .obcard .mdot{margin:0}}
 /* phones: the medium pill sits on its own row at the top, level with the theme button, on every section */
 @media (max-width:759px){.titlerow{flex-direction:column-reverse;align-items:flex-start;gap:10px}.mmenu{position:fixed;left:12px;right:12px;top:60px;width:auto;max-width:none}}

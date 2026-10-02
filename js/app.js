@@ -185,8 +185,9 @@ function buildChips(){const G=groups();
    const on=many?(v==="__any"?st.f[key].length===0:st.f[key].includes(v)):st.f[key][0]===v;b.setAttribute("aria-pressed",on);
    b.onclick=()=>{if(many){if(v==="__any")st.f[key]=[];else{const i=st.f[key].indexOf(v);if(i>=0)st.f[key].splice(i,1);else st.f[key].push(v);if(st.f[key].length===G[key].length)st.f[key]=[]}}else st.f[key]=[v];save();buildChips();render()};
    box.appendChild(b)})});
- const n=["brand","lf","trans","stain","dry","series"].filter(k=>st.f[k].length).length+(st.f.pig[0]!=="any")+(st.f.gran[0]!=="any")+(st.f.inf[0]!=="inc")+(st.f.avail[0]!=="cur")+(st.f.light[0]!==0||st.f.light[1]!==100);
+ const n=activeFilters();
  $("fBadge").textContent=n;$("fBadge").hidden=!n;quickBrands()}
+const activeFilters=()=>["brand","lf","trans","stain","dry","series"].filter(k=>st.f[k].length).length+(st.f.pig[0]!=="any")+(st.f.gran[0]!=="any")+(st.f.inf[0]!=="inc")+(st.f.avail[0]!=="cur")+(st.f.light[0]!==0||st.f.light[1]!==100);
 const valueBrands=()=>(cur.value||[]).filter(k=>BRANDS[k]);
 // one tap narrows the wheel to the medium's good-value brands; tapping again shows every brand
 function quickBrands(){const vb=valueBrands(),box=$("quick");box.hidden=!vb.length;if(!vb.length)return;
@@ -286,7 +287,7 @@ function render(){
  const pu=$("pal");pu.innerHTML="";
  [...sel].sort(hueSort).forEach(p=>{const parts=[];if(A){const loss=(M.loss??={})[p.id]??=(A-envArea(envOf(sel.filter(q=>q!==p))))/A*100;if(loss>=0.1)parts.push(`Sets the edge · removing it loses ${loss.toFixed(1)}%`)}const w=fails(p);if(w.length)parts.push("Outside your filters: "+w.join(", "));pu.appendChild(palRow(p,parts.join("<br>")))});
  if(!sel.length){pu.innerHTML=`<li class="fine startli">Your ${cur.name.toLowerCase()} palette is empty. Add paints from the wheel or the search in Pigments, or start with a basic set: a warm and a cool of each primary${cur.white?", plus white and black":""}, rated lightfast where the brands allow.<br><button class="starter">Add a basic set</button></li>`;
-  pu.querySelector(".starter").onclick=e=>addStarter(e.currentTarget.getBoundingClientRect())}
+  pu.querySelector(".starter").onclick=e=>openSetDlg(e.currentTarget.getBoundingClientRect())}
  search();drawFocus()}
 const q=$("q"),res=$("results");
 function search(){const v=q.value.trim().toLowerCase();res.innerHTML="";if(!v)return;
@@ -483,7 +484,7 @@ document.querySelectorAll(".theme button").forEach(b=>b.onclick=()=>setTheme(b.d
 $("themeBtn").onclick=()=>{const t=$("themeBtn").dataset.t||"auto";setTheme(THEMES[(THEMES.indexOf(t)+1)%3])};
 setTheme(document.documentElement.dataset.theme||"auto");
 
-const _render=render;render=function(){_render();renderMix()};
+const _render=render;render=function(){_render();renderMix();if(setStep===2)setPreview()};
 
 // ---- starter set: a warm and a cool of each primary, plus white and black for opaque paints ----
 const hueGap=(a,b)=>Math.abs(((a-b)%360+540)%360-180);
@@ -528,19 +529,61 @@ const sound=p=>p.lf===1||p.lf===2;
 // Sound paints first, from as few and as affordable brands as possible: one good-value brand,
 // then the medium's good-value brands together, then any one brand, then any brands. Only when no
 // sound set exists does it fall back to the best paints available.
-function starterSet(){const inProd=P.filter(p=>!p.disc),ok=inProd.filter(passes),pool=ok.length>=slotsFor().length?ok:inProd;
+// It keeps to your filters when enough paints meet them. strict keeps to them always, even if that
+// leaves some colors out (a set you build with your own filters).
+function starterSet(strict){const inProd=P.filter(p=>!p.disc),ok=inProd.filter(passes),pool=strict||ok.length>=slotsFor().length?ok:inProd;
  const bestOf=(groups,only)=>{let best=null;for(const g of groups){const r=fitSet(pool.filter(p=>g.includes(p.brand)&&(!only||sound(p))),14);if(r&&(!best||r.tot>best.tot))best=r}return best};
  const value=valueBrands(),each=DATA.brands.map(b=>[b.key]),every=[DATA.brands.map(b=>b.key)];
  const best=bestOf(value.map(k=>[k]),true)||bestOf([value],true)||bestOf(each,true)||bestOf(every,true)||bestOf(value.map(k=>[k]))||bestOf(each)||fitSet(pool,14)||fitSet(pool,30,true);
  return Object.assign(best.out,{sound:best.out.length===slotsFor().length&&best.out.every(sound)})}
 // Adding a set also narrows the filters to its brands and, when every paint is rated I or II,
-// to that lightfastness, so what you see next matches the set.
+// to that lightfastness, so what you see next matches the set. It only ever narrows: brands or
+// ratings you had already left out stay out (lightfast I alone stays I alone).
 function starterFilters(set){const keys=[...new Set(set.map(p=>p.brand))],fl=[];
- if(DATA.brands.length>1&&keys.length<DATA.brands.length){st.f.brand=keys;fl.push(set.map(p=>p.bs).filter((b,i,a)=>a.indexOf(b)===i).join(" and "))}
- if(set.sound&&P.some(HAS.lf)){st.f.lf=["1","2"];fl.push("lightfast I or II")}
+ const nb=st.f.brand.length?keys.filter(k=>st.f.brand.includes(k)):keys;
+ if(DATA.brands.length>1&&nb.length&&nb.length<(st.f.brand.length||DATA.brands.length)){st.f.brand=nb;fl.push(nb.map(k=>BRANDS[k]?.short||k).join(" and "))}
+ const lf=["1","2"].filter(v=>!st.f.lf.length||st.f.lf.includes(v));
+ if(set.sound&&P.some(HAS.lf)&&lf.length&&lf.length<(st.f.lf.length||4)){st.f.lf=lf;fl.push("lightfast "+lf.map(v=>ROMAN[v]).join(" or "))}
  if(fl.length)buildChips();return fl}
-function addStarter(rect){const set=starterSet(),add=set.filter(p=>!inPal(p));add.forEach(p=>st.sel.push(p.id));const fl=starterFilters(set);save();render();
- toast((add.length?`Added ${add.length} paint${add.length===1?"":"s"}`:"Those paints are already in your palette")+(fl.length?` · filters set to ${fl.join(", ")}`:""),rect,fl.length?3200:2200)}
+function addSet(set,rect,narrow){const add=set.filter(p=>!inPal(p));add.forEach(p=>st.sel.push(p.id));const fl=narrow?starterFilters(set):[];save();render();
+ toast((add.length?`Added ${nPaints(add.length)}`:"Those paints are already in your palette")+(fl.length?` · filters set to ${fl.join(", ")}`:""),rect,fl.length?3200:2200)}
+const addStarter=rect=>addSet(starterSet(),rect,true);
+// what a set is, for the dialogs: its rating, whether it's all single pigments, and its brands
+function setFacts(set){const brands=[...new Set(set.map(p=>p.bs))],f=[];
+ if(set.sound)f.push(`rated lightfast ${set.every(p=>p.lf===1)?"I":"I or II"}`);
+ if(set.length&&set.every(p=>p.single))f.push("all single pigments");
+ if(brands.length)f.push(brands.length===1?`all from ${esc(brands[0])}`:`from ${esc(brands.join(" and "))}`);
+ return f.length?f.join(", ").replace(/^./,c=>c.toUpperCase())+".":""}
+const swatches=set=>`<span class="obsw" role="img" aria-label="${esc(set.map(p=>p.n).join(", "))}">${set.map(p=>`<span style="background:${p.rgb}" title="${esc(p.n)}"></span>`).join("")}</span>`;
+
+// ---- Add a basic set: one picked for you, or one you shape with the filters ----
+// Choosing your own moves the filter card into the dialog and back out when it closes. The filters
+// you set there are your filters; closing without adding puts back the ones you had.
+const setDlg=$("setDlg"),fHome=filtersEl.nextElementSibling;let setStep=0,setRect=null,setUndo=null;
+function openSetDlg(rect){setRect=rect;setStep1();setDlg.showModal();setDlg.querySelector("h2").focus()}
+function setStep1(){homeFilters();setStep=1;const set=starterSet(),n=activeFilters();
+ setDlg.innerHTML=`<h2 id="setTitle" tabindex="-1">Add a basic set</h2><p class="fine obsub">A warm and a cool of each primary${cur.white?", plus white and black,":","} so you can mix most colors right away.</p>
+<div class="obgrid two"><button class="obcard" data-act="auto">${swatches(set)}<b>Pick one for me</b><span class="note">From a good-value brand, rated lightfast I or II, with single-pigment paints first${n?", within your current filters":""}. ${setFacts(set)}</span></button>
+<button class="obcard" data-act="custom"><span class="obsw empty" aria-hidden="true"></span><b>Choose brand and filters</b><span class="note">Pick the brands, lightfastness and anything else, and see the set before you add it.</span></button></div>
+<div class="obfoot"><button class="link" data-act="cancel">Cancel</button></div>`;
+ setDlg.querySelector("[data-act=auto]").onclick=()=>{setDlg.close();addStarter(setRect)};
+ setDlg.querySelector("[data-act=custom]").onclick=setStep2;
+ setDlg.querySelector("[data-act=cancel]").onclick=()=>setDlg.close()}
+function setStep2(){setStep=2;setUndo=clone(st.f);
+ setDlg.innerHTML=`<button class="link obback" data-act="back">‹ Back</button><h2 id="setTitle" tabindex="-1">Choose your basic set</h2><p class="fine obsub">Set the brand and anything else. The set only uses paints that match, and updates as you go.</p>
+<div class="setslot"></div><div class="setbar"><div class="setprev" aria-live="polite"></div><div class="obfoot"><button class="link" data-act="cancel">Cancel</button><button class="primary" data-act="add"></button></div></div>`;
+ setDlg.querySelector(".setslot").appendChild(filtersEl);
+ setDlg.querySelector("[data-act=back]").onclick=()=>{undoFilters();setStep1();setDlg.querySelector("h2").focus()};
+ setDlg.querySelector("[data-act=cancel]").onclick=()=>setDlg.close();
+ setDlg.querySelector("[data-act=add]").onclick=()=>{const set=starterSet(true);setUndo=null;setDlg.close();addSet(set,setRect,false)};
+ setPreview();setDlg.querySelector("h2").focus()}
+function setPreview(){const box=setDlg.querySelector(".setprev");if(!box)return;
+ const set=starterSet(true),add=set.filter(p=>!inPal(p)),want=slotsFor().length;
+ box.innerHTML=set.length?`${swatches(set)}<p class="fine">${esc(set.map(p=>shortName(p)).join(", "))}. ${setFacts(set)}${set.length<want?` These filters leave out ${want-set.length} of the ${want} colors; loosen them for a full set.`:""}</p>`:'<p class="fine">No paints match these filters. Loosen them to build a set.</p>';
+ const b=setDlg.querySelector("[data-act=add]");b.disabled=!add.length;b.textContent=add.length?`Add ${nPaints(add.length)}`:set.length?"Already in your palette":"Add"}
+function undoFilters(){if(!setUndo)return;st.f=setUndo;setUndo=null;save();buildChips();syncLight();render()}
+function homeFilters(){if(filtersEl.parentNode!==fHome.parentNode)fHome.before(filtersEl)}
+setDlg.addEventListener("close",()=>{undoFilters();homeFilters();setStep=0});
 
 // ---- mediums: each has its own paints, palette, stored palette, filters and mixes ----
 const loading={},blankMedium=m=>({m,data:null,B:{},P:[],byId:{},FULL:0,curveCache:new Map(),poolCache:new Map()});

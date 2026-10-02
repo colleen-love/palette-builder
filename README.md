@@ -54,4 +54,4 @@ Reach is the area your palette covers on the a\*b\* plane, traced along the simu
 
 Not affiliated with any paint maker. Mixbox and the artistpigments.org data are both licensed for non-commercial use, so keep this project non-commercial.
 
-When you change `css/`, `js/` or `data/` (including adding a medium's file), update the `?v=` value on every asset link in `index.html` (the stylesheet and each script) (any new string works). Browsers cache these files, and the new value makes them fetch fresh copies; `app.js` reuses it for the data files.
+When you change `css/`, `js/` or `data/` (including adding a medium's file), update the `?v=` value on every asset link in `index.html` (the stylesheet and each script; any new string works). Browsers cache these files, and the new value makes them fetch fresh copies; `config.js` reuses it for the data files.

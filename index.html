@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
 <!-- bump ?v= when these files change so browsers fetch fresh copies -->
-<link rel="stylesheet" href="css/styles.css?v=share1">
+<link rel="stylesheet" href="css/styles.css?v=split1">
 </head>
 <body data-tab="pigments">
 <header class="top">
@@ -136,7 +136,21 @@
 <div id="sheet" class="sheet" role="dialog" aria-labelledby="sheetTitle" hidden></div>
 <dialog id="onboard" class="ob" aria-labelledby="obTitle"></dialog>
 <dialog id="shareDlg" class="ob" aria-labelledby="shTitle"></dialog>
-<script src="js/mixbox.js?v=share1"></script>
-<script src="js/app.js?v=share1"></script>
+<dialog id="setDlg" class="ob setdlg" aria-labelledby="setTitle"></dialog>
+<script src="js/mixbox.js?v=split1"></script>
+<!-- the app, in order: each script uses what the ones above it define -->
+<script src="js/config.js?v=split1"></script>
+<script src="js/state.js?v=split1"></script>
+<script src="js/wheel.js?v=split1"></script>
+<script src="js/filters.js?v=split1"></script>
+<script src="js/palette.js?v=split1"></script>
+<script src="js/mixing.js?v=split1"></script>
+<script src="js/sheet.js?v=split1"></script>
+<script src="js/layout.js?v=split1"></script>
+<script src="js/basicset.js?v=split1"></script>
+<script src="js/mediums.js?v=split1"></script>
+<script src="js/onboarding.js?v=split1"></script>
+<script src="js/share.js?v=split1"></script>
+<script src="js/main.js?v=split1"></script>
 </body>
 </html>

@@ -525,8 +525,14 @@ function starterSet(){const inProd=P.filter(p=>!p.disc),ok=inProd.filter(passes)
  const value=valueBrands(),each=DATA.brands.map(b=>[b.key]),every=[DATA.brands.map(b=>b.key)];
  const best=bestOf(value.map(k=>[k]),true)||bestOf([value],true)||bestOf(each,true)||bestOf(every,true)||bestOf(value.map(k=>[k]))||bestOf(each)||fitSet(pool,14)||fitSet(pool,30,true);
  return Object.assign(best.out,{sound:best.out.length===slotsFor().length&&best.out.every(sound)})}
-function addStarter(rect){const add=starterSet().filter(p=>!inPal(p));add.forEach(p=>st.sel.push(p.id));save();render();
- toast(add.length?`Added ${add.length} paint${add.length===1?"":"s"}`:"Those paints are already in your palette",rect,2200)}
+// Adding a set also narrows the filters to its brands and, when every paint is rated I or II,
+// to that lightfastness, so what you see next matches the set.
+function starterFilters(set){const keys=[...new Set(set.map(p=>p.brand))],fl=[];
+ if(DATA.brands.length>1&&keys.length<DATA.brands.length){st.f.brand=keys;fl.push(set.map(p=>p.bs).filter((b,i,a)=>a.indexOf(b)===i).join(" and "))}
+ if(set.sound&&P.some(HAS.lf)){st.f.lf=["1","2"];fl.push("lightfast I or II")}
+ if(fl.length)buildChips();return fl}
+function addStarter(rect){const set=starterSet(),add=set.filter(p=>!inPal(p));add.forEach(p=>st.sel.push(p.id));const fl=starterFilters(set);save();render();
+ toast((add.length?`Added ${add.length} paint${add.length===1?"":"s"}`:"Those paints are already in your palette")+(fl.length?` · filters set to ${fl.join(", ")}`:""),rect,fl.length?3200:2200)}
 
 // ---- mediums: each has its own paints, palette, stored palette, filters and mixes ----
 const loading={},blankMedium=m=>({m,data:null,B:{},P:[],byId:{},FULL:0,curveCache:new Map(),poolCache:new Map()});

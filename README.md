@@ -7,7 +7,7 @@ Select paints on the color wheel and add them to your palette, then mix them tog
 - **Mediums:** switch from the menu next to the title. Each medium keeps its own palette, stored palette, filters and mixes, and the URL says which one is open (`?medium=oil`), so links and the Back button work. A medium whose paint data isn't there yet says so instead of showing an empty wheel.
 - **Getting started:** on a first visit the app asks which mediums you paint with, then offers to start from a basic set: a warm and a cool of each primary, plus a white and a black for gouache, oil and acrylic, all rated lightfast I or II. Mixtures count (budget lines rely on them), but single pigments, I over II and true pigment names win close calls, and tints rarely qualify. The cool yellow is the greenest bright yellow the brand has and the warm one sits clearly on the orange side; blues are chosen by pigment (ultramarine warm, phthalo or cerulean cool), since a phthalo's masstone reads nearly as violet as ultramarine. The set comes from one good-value brand where one covers it, then that medium's good-value brands together, then any brand. You can also start with an empty palette. "Getting started" in the medium menu and the footer opens it again. Anyone who used the watercolor-only version keeps their palette as the Watercolor palette and sees a one-time note about the new mediums.
 
-- **Pigments:** the wheel, with filters for brand, lightfastness, single pigment vs. mixture, transparency, staining, granulation, drying time (oil), price series, availability and lightness. Each filter appears only when the current medium's data has values for it. Search by name, brand or pigment code (e.g. `PB29`) to add a paint in one tap. A **Good value** shortcut at the top of the Brand filter narrows the wheel to the least expensive lines sold by US art retailers that can supply the whole basic set in paints rated lightfast I or II: Van Gogh and Da Vinci watercolors, Winsor & Newton Designers gouache, Maimeri Classico oils and Liquitex Basics acrylics. The basic set comes from them when it can. Price and availability aren't in the data (they were checked against US retailers in October 2026), so change the picks in `value` in `MEDIA` at the top of `js/app.js` as prices move.
+- **Pigments:** the wheel, with filters for brand, lightfastness, single pigment vs. mixture, transparency, staining, granulation, drying time (oil), price series, availability and lightness. Each filter appears only when the current medium's data has values for it. Search by name, brand or pigment code (e.g. `PB29`) to add a paint in one tap. A **Good value** shortcut at the top of the Brand filter narrows the wheel to the least expensive lines sold by US art retailers that can supply the whole basic set in paints rated lightfast I or II: Van Gogh and Da Vinci watercolors, Winsor & Newton Designers gouache, Maimeri Classico oils and Liquitex Basics acrylics. The basic set comes from them when it can. Price and availability aren't in the data (they were checked against US retailers in October 2026), so change the picks in `value` in `MEDIA` in `js/config.js` as prices move.
 - **Palette:** your paints, how much of the full color range they reach (the shaded wash on the wheel), which paints set its edge, and which additions would widen it most. You can store a palette and compare against it later.
 - **Mixing:** mixing paths between palette paints on the a\*b\* color plane, a strip per pair (textured where a paint granulates), or everything three paints can make together. Tap any dot or point along a strip for the mixed color, its percentages and a simple parts ratio, and drag to adjust it.
 
@@ -17,7 +17,20 @@ On phones the three sections sit behind a bottom menu, the filters open from a b
 
 - `index.html`: page markup
 - `css/styles.css`: styles, including light and dark themes
-- `js/app.js`: the app
+- `js/`: the app, one plain script per part, loaded in order by `index.html` and sharing one scope (each uses what the ones before it define):
+  - `config.js`: the mediums (`MEDIA`): data files, descriptions and good-value brands
+  - `state.js`: constants, color conversion, saved state and the filter test (`fails`)
+  - `wheel.js`: the color wheel, tooltips, toasts and paint details
+  - `filters.js`: the filter chips and lightness range
+  - `palette.js`: reach, the main `render`, search and the palette buttons
+  - `mixing.js`: the mixing chart and pair strips
+  - `sheet.js`: the detail sheet for a paint or a mix
+  - `layout.js`: the section menu and color theme
+  - `basicset.js`: picking a basic set, and the Add a basic set dialog
+  - `mediums.js`: loading a medium's data and the medium switcher
+  - `onboarding.js`: getting started
+  - `share.js`: opening a shared palette link
+  - `main.js`: start up
 - `js/mixbox.js`: [Mixbox](https://github.com/scrtwpns/mixbox) pigment mixing (CC BY-NC 4.0)
 - `data/paints.json`: every watercolor, with its brand, CIELAB color and properties
 - `data/gouache.json`, `data/oil.json`, `data/acrylic.json`: the other mediums, in the same format
@@ -29,7 +42,7 @@ The page loads `data/paints.json` with `fetch`, so opening `index.html` straight
 
 ## Data
 
-Each medium's file has the same shape as `data/paints.json`: a `brands` list (`key`, `name`, `short`, `url`) and a `paints` list. A paint needs `id` (unique), `brand` (a brand `key`), `name` and its CIELAB `L`, `a`, `b`. Everything else is optional: `single`, `pig`, `lf` and `lfRaw`, `trans` (T, ST, SO or O), `stain` and `gran` (with `stainSrc` / `granSrc`), `series`, `disc`, `src`, `url`, and for oil `dry` (fast, medium or slow) with the brand's own wording in `dryRaw`. A filter only shows when at least one paint in that medium has a value for it, so oil without granulation data simply has no Granulation filter. The medium list, file names and short descriptions are in `MEDIA` at the top of `js/app.js`.
+Each medium's file has the same shape as `data/paints.json`: a `brands` list (`key`, `name`, `short`, `url`) and a `paints` list. A paint needs `id` (unique), `brand` (a brand `key`), `name` and its CIELAB `L`, `a`, `b`. Everything else is optional: `single`, `pig`, `lf` and `lfRaw`, `trans` (T, ST, SO or O), `stain` and `gran` (with `stainSrc` / `granSrc`), `series`, `disc`, `src`, `url`, and for oil `dry` (fast, medium or slow) with the brand's own wording in `dryRaw`. A filter only shows when at least one paint in that medium has a value for it, so oil without granulation data simply has no Granulation filter. The medium list, file names and short descriptions are in `MEDIA` in `js/config.js`.
 
 - Color (CIELAB) and paint properties for every medium: [artistpigments.org](https://artistpigments.org/), licensed [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/), mostly handmade masstone samples. A few paints use the manufacturer's published values or a printed color chart; the app says so for those paints.
 - Lightfastness is converted from each brand's own scale (ASTM I–IV, AA–C, Excellent to Poor, Blue Wool, or stars) to a common I–IV for filtering; `tools/import_artistpigments.py` lists the rules, and staining to non-staining, semi-staining or staining. Each paint's original rating is kept in `lfRaw` and shown in the app. Price series are each brand's own and aren't comparable across brands.
@@ -41,4 +54,4 @@ Reach is the area your palette covers on the a\*b\* plane, traced along the simu
 
 Not affiliated with any paint maker. Mixbox and the artistpigments.org data are both licensed for non-commercial use, so keep this project non-commercial.
 
-When you change `css/`, `js/` or `data/` (including adding a medium's file), update the `?v=` value on the three asset links in `index.html` (any new string works). Browsers cache these files, and the new value makes them fetch fresh copies; `app.js` reuses it for the data files.
+When you change `css/`, `js/` or `data/` (including adding a medium's file), update the `?v=` value on every asset link in `index.html` (the stylesheet and each script) (any new string works). Browsers cache these files, and the new value makes them fetch fresh copies; `app.js` reuses it for the data files.

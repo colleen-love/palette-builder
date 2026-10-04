@@ -27,8 +27,8 @@ function renderMix(){
  const tri=st.mix3&&ms.length===3;
  if(!tri&&ms.length>1){const pw=document.createElement("div");pw.className="pairs";pw.id="pairs";bars.appendChild(pw);renderPairs(ms)}
  // keep an open recipe only while its paints are still in the mix
- if(sheetCtx&&sheetCtx.kind==="mix"&&!(sheetCtx.ps.every(p=>st.mix.includes(p.id))&&(sheetCtx.ps.length===3)===tri))closeSheet();
- drawMark();updateTicks()
+ if(sheetCtx&&sheetCtx.kind==="mix"&&!sheetCtx.keep&&!(sheetCtx.ps.every(p=>st.mix.includes(p.id))&&(sheetCtx.ps.length===3)===tri))closeSheet();
+ drawMark();updateTicks();renderSaved()
 }
 function hilite(sel){document.querySelectorAll(".mchart .mpath").forEach(g=>{const on=sel==null||g.dataset.a===sel||g.dataset.b===sel||g.dataset.k===sel;g.style.opacity=on?1:.12})}
 const recipeTxt=(ps,w)=>ps.map((p,k)=>w[k]?`${w[k]}% ${nameIn(p,ps)}`:null).filter(Boolean).join("\n");
@@ -55,16 +55,19 @@ function mixChart(ms){
   placed.push([x,y]);const t=el("text",{x,y,"font-size":3.8,fill:"var(--ink)","text-anchor":Math.abs(ux)<.3?"middle":ux>0?"start":"end","paint-order":"stroke",stroke:"var(--paper)","stroke-width":1.2,"pointer-events":"none"},svg);t.textContent=nameIn(p,ms)};
  ms.forEach(p=>el("circle",{cx:p.a,cy:-p.b,r:3.6,fill:p.rgb,stroke:"var(--ink)","stroke-width":.6,style:"cursor:pointer"},svg));
  ms.forEach(label);
+ drawSaved(svg);
  markG=el("g",{"pointer-events":"none"},svg);
  // hit testing by distance, so dots a few pixels wide still work under a finger
  const paintAt=(pt,R)=>tri?null:ms.map(p=>({p,d:Math.hypot(p.a-pt.x,-p.b-pt.y)})).filter(o=>o.d<R).sort((a,b)=>a.d-b.d)[0]?.p;
  svg.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const pt=svgPt(svg,e),u=unitsPerPx(svg),p=paintAt(pt,Math.max(4.5,8*u));
   if(p){svg.style.cursor="pointer";showTip(`${p.n} · ${p.bs}${p.gran==="G"?" (granulating)":""}`,e);if(!mixFocus)hilite(p.id);return}
+  const s=savedAt(pt,Math.max(4,7*u));if(s){svg.style.cursor="pointer";showTip(savedTip(s),e);return}
   const m=nearestMix(pt,10*u);svg.style.cursor=m?"pointer":"";
   if(m){showTip(recipeTxt(m.ps,m.w),e);if(!mixFocus&&m.k)hilite(m.k)}else{hideTip();hilite(mixFocus)}});
  svg.addEventListener("pointerleave",()=>{hideTip();hilite(mixFocus)});
  svg.addEventListener("click",e=>{const pt=svgPt(svg,e),u=unitsPerPx(svg),p=paintAt(pt,Math.max(4.5,(touchy()?12:8)*u));
   if(p){mixFocus=mixFocus===p.id?null:p.id;hilite(mixFocus);renderPairs(ms);updateTicks();return}
+  const s=savedAt(pt,Math.max(4,(touchy()?12:7)*u));if(s){openSaved(s.m,e.clientY);return}
   const m=nearestMix(pt,(touchy()?24:12)*u);if(m)openMix(m.ps,m.w,e.clientY)});
  const cap=document.createElement("figcaption");cap.className="fine";
  cap.textContent=tri?`Each dot is a mix of the three paints in 5% steps, from the pure paints at the corners to equal parts in the middle. ${verb()} a dot for its color and recipe.`

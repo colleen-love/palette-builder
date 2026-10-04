@@ -2,7 +2,8 @@
 const sheet=$("sheet");
 const closeBtn='<button class="x sh-close" aria-label="Close">×</button>';
 function openPaint(p,near=[],y){sheetCtx={kind:"paint",p,near};drawSheet();drawFocus();drawMark();updateTicks();keepVisible(y)}
-function openMix(ps,w,y){sheetCtx={kind:"mix",ps,w:[...w]};drawSheet();drawFocus();drawMark();updateTicks();keepVisible(y)}
+// o.saved: the saved mix this is; o.keep: stay open when its paints aren't all picked in Mixing
+function openMix(ps,w,y,o={}){sheetCtx={kind:"mix",ps,w:[...w],saved:o.saved||null,keep:!!o.keep};drawSheet();drawFocus();drawMark();updateTicks();keepVisible(y)}
 function closeSheet(){if(!sheetCtx)return;sheetCtx=null;sheet.hidden=true;sheet.innerHTML="";document.body.style.paddingBottom="";drawFocus();drawMark();updateTicks()}
 // on phones the sheet covers the bottom of the screen: leave room to scroll, and lift what was tapped above it
 const phone=matchMedia("(max-width:759px)");
@@ -22,9 +23,9 @@ ${c.near.length?`<div class="sh-near"><span class="flabel">Also near your tap</s
 <div class="ratio" id="mixBar">${ps.map(p=>`<span style="background:${p.rgb}"></span>`).join("")}</div>
 <div class="rec">${ps.map((p,k)=>`<span class="sw" style="background:${p.rgb}"></span><span class="nm">${esc(nameIn(p,ps))} <span class="note" id="pp${k}"></span></span><span class="pc" id="pc${k}"></span>${ps.length===3?`<input type="range" min="0" max="100" step="5" data-k="${k}" aria-label="Share of ${esc(p.n)}">`:""}`).join("")}</div>
 ${ps.length===2?`<div class="two"><span class="sw" style="background:${ps[0].rgb}"></span><input type="range" min="0" max="100" step="5" data-k="1" aria-label="Share of ${esc(ps[1].n)}"><span class="sw" style="background:${ps[1].rgb}"></span></div>`:""}
-<p class="fine" style="margin:0">${gran.length?`${esc(gran.map(p=>p.n+(inferred(p,"gran")?" (inferred)":"")).join(" and "))} granulate${gran.length===1?"s":""}, so expect texture. `:""}Drag to adjust. Assumes equal strength, so ${cur.strong||"a strong paint takes over faster in real mixes"}.</p>`;
+<p class="fine" style="margin:0">${gran.length?`${esc(gran.map(p=>p.n+(inferred(p,"gran")?" (inferred)":"")).join(" and "))} granulate${gran.length===1?"s":""}, so expect texture. `:""}Drag to adjust. Assumes equal strength, so ${cur.strong||"a strong paint takes over faster in real mixes"}.</p>${saveBox(c)}`;
   sheet.querySelectorAll("input[type=range]").forEach(r=>r.addEventListener("input",()=>setShare(+r.dataset.k,+r.value)));
-  updateMixSheet()}
+  wireSaveBox(c);updateMixSheet()}
  sheet.querySelector(".sh-close").onclick=closeSheet}
 function setShare(k,v){const w=sheetCtx.w;if(w.length===2){w[k]=v;w[1-k]=100-v}
  else{const o=[0,1,2].filter(i=>i!==k),rem=100-v,s=w[o[0]]+w[o[1]],a=s?Math.round(rem*w[o[0]]/s/5)*5:Math.round(rem/10)*5;w[o[0]]=a;w[o[1]]=rem-a;w[k]=v}
@@ -36,7 +37,7 @@ function updateMixSheet(){const{ps,w}=sheetCtx,L=mixLab(ps,w.map(v=>v/100)),hex=
  document.querySelectorAll("#mixBar span").forEach((s,k)=>s.style.width=w[k]+"%");
  ps.forEach((p,k)=>{$("pc"+k).textContent=w[k]+"%";$("pp"+k).textContent=parts?`· ${parts[k]} part${parts[k]===1?"":"s"}`:"";
   const r=sheet.querySelector(`input[type=range][data-k="${k}"]`);if(r&&+r.value!==w[k])r.value=w[k]});
- drawMark();updateTicks()}
+ syncSaveBox(parts);drawMark();updateTicks()}
 addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
 $("mixClear").onclick=()=>{st.mix=[];save();renderMix()};
 $("mix2btn").onclick=()=>{st.mix3=false;save();renderMix()};

@@ -15,15 +15,16 @@ const DEFF={brand:[],lf:[],pig:["any"],trans:[],stain:[],gran:["any"],inf:["inc"
 const KEY="wpb:v3";
 const clone=o=>JSON.parse(JSON.stringify(o));
 // a mix set is one painting's plan: the paints picked in Mixing (mix, mix3) and its saved mixes,
+// named once saved as a set (an unnamed set is the working list),
 // each a name, paint ids and whole-percent shares (w) that add up to 100
 const newSet=n=>({n,mix:[],mix3:false,mixes:[]});
-const blank=()=>({sel:[],base:[],mix:[],mix3:false,f:clone(DEFF),sets:[newSet("My mixes")],set:0});
+const blank=()=>({sel:[],base:[],mix:[],mix3:false,f:clone(DEFF),sets:[newSet("")],set:0});
 function cleanSets(v,s){const txt=(t,d)=>typeof t==="string"&&t.trim()?t.trim().slice(0,60):d;
  const ids=a=>Array.isArray(a)?a.filter(id=>typeof id==="string"):[];
- const sets=(Array.isArray(v.sets)?v.sets:[]).filter(o=>o&&typeof o==="object").map((o,i)=>({n:txt(o.n,"Mix set "+(i+1)),mix:ids(o.mix),mix3:!!o.mix3,
+ const sets=(Array.isArray(v.sets)?v.sets:[]).filter(o=>o&&typeof o==="object").map(o=>({n:txt(o.n,""),mix:ids(o.mix),mix3:!!o.mix3,
   mixes:(Array.isArray(o.mixes)?o.mixes:[]).filter(m=>m&&typeof m==="object"&&ids(m.ps).length>1&&Array.isArray(m.w)&&m.w.length===m.ps.length&&m.w.every(x=>Number.isInteger(x)&&x>0)&&m.w.reduce((a,b)=>a+b,0)===100)
    .map((m,k)=>({n:txt(m.n,"Mix "+(k+1)),ps:ids(m.ps),w:[...m.w]}))}));
- if(!sets.length){const d=newSet("My mixes");d.mix=s.mix;d.mix3=s.mix3;sets.push(d)}
+ if(!sets.length){const d=newSet("");d.mix=s.mix;d.mix3=s.mix3;sets.push(d)}
  s.sets=sets;s.set=Number.isInteger(v.set)&&v.set>=0&&v.set<sets.length?v.set:0;
  s.mix=[...sets[s.set].mix];s.mix3=sets[s.set].mix3}
 // one medium's saved state; paint ids are checked against the data once that medium loads

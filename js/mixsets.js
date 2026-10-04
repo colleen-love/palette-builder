@@ -1,7 +1,7 @@
 // ---- mix sets: a named plan per painting, its saved mixes, and comparing a paint swap ----
 // swap: {from,to} while comparing what the set's mixes become with another palette paint (to is null until picked)
-// setMode: "rename" or "delete" while the set bar is asking
-let swap=null,setMode=null,savedPts=[];
+// swapOpen: the Swap out a paint section is open. setMode: "name" or "delete" while the mix set row is asking
+let swap=null,swapOpen=false,setMode=null,savedPts=[];
 const curSet=()=>st.sets[st.set];
 const okMix=m=>m.ps.every(id=>byId[id]);
 const mixOf=m=>m.ps.map(id=>byId[id]);
@@ -32,64 +32,72 @@ function swappedOf(m){if(!swap||!swap.to||!m.ps.includes(swap.from)||!okMix(m))r
  const ps=[...new Set(m.ps.map(id=>id===swap.from?swap.to:id))].map(id=>byId[id]),res=closest(ps,labOf(m));
  if(swapMemo.size>200)swapMemo.clear();swapMemo.set(key,res);return res}
 
-function selectSet(i){st.set=i;const t=curSet();st.mix=[...t.mix];st.mix3=t.mix3;swap=null;setMode=null;mixFocus=null;
+// a set with no name is the working list; leaving it while it's empty drops it, so New mix set doesn't pile up empty ones
+function useSet(i){st.set=i;const t=curSet();st.mix=[...t.mix];st.mix3=t.mix3;swap=null;swapOpen=false;setMode=null;mixFocus=null;
  if(sheetCtx&&sheetCtx.kind==="mix")closeSheet();save();renderMix()}
-function renderSetBar(){const bar=$("setBar"),cs=curSet();
- if(setMode==="rename"){
-  bar.innerHTML=`<label class="flabel" for="setName">Mix set</label><input id="setName" class="txt" maxlength="60" autocomplete="off" value="${esc(cs.n)}"><span class="setacts"><button class="link" data-act="done">Done</button></span>`;
-  const inp=$("setName");let fin=false;
-  const done=keep=>{if(fin)return;fin=true;if(keep)cs.n=inp.value.trim().slice(0,60)||cs.n;setMode=null;save();renderSaved()};
-  inp.onkeydown=e=>{if(e.key==="Enter")done(true);else if(e.key==="Escape"){e.stopPropagation();done(false)}};
-  inp.onblur=()=>done(true);bar.querySelector("[data-act=done]").onclick=()=>done(true);
-  inp.focus();inp.select();return}
- if(setMode==="delete"){const n=cs.mixes.length;
-  bar.innerHTML=`<p class="setask">Delete <b>${esc(cs.n)}</b> and its ${n} saved mix${n===1?"":"es"}?</p><span class="setacts"><button data-act="yes">Delete</button><button class="link" data-act="no">Keep it</button></span>`;
-  bar.querySelector("[data-act=yes]").onclick=()=>delSet();
-  bar.querySelector("[data-act=no]").onclick=()=>{setMode=null;renderSetBar()};
-  bar.querySelector("[data-act=no]").focus();return}
- bar.innerHTML=`<label class="flabel" for="setSel">Mix set</label><select id="setSel">${st.sets.map((t,i)=>`<option value="${i}"${i===st.set?" selected":""}>${esc(t.n)}${t.mixes.length?` (${t.mixes.length})`:""}</option>`).join("")}</select>
-<span class="setacts"><button class="link" data-act="new">New</button><button class="link" data-act="ren">Rename</button><button class="link" data-act="del">Delete</button></span>`;
- $("setSel").onchange=e=>selectSet(+e.target.value);
- bar.querySelector("[data-act=new]").onclick=()=>{let k=st.sets.length+1;while(st.sets.some(t=>t.n==="Mix set "+k))k++;
-  const t=newSet("Mix set "+k);t.mix=[...st.mix];t.mix3=st.mix3;st.sets.push(t);selectSet(st.sets.length-1);setMode="rename";renderSetBar()};
- bar.querySelector("[data-act=ren]").onclick=()=>{setMode="rename";renderSetBar()};
- bar.querySelector("[data-act=del]").onclick=()=>{if(curSet().mixes.length){setMode="delete";renderSetBar()}else delSet()}}
-function delSet(){const n=curSet().n;st.sets.splice(st.set,1);if(!st.sets.length)st.sets.push(newSet("My mixes"));
- selectSet(Math.min(st.set,st.sets.length-1));toast(`Deleted ${n}`,null,1800);$("setSel")?.focus()}
+function selectSet(i){const old=curSet(),next=st.sets[i];if(old!==next&&!old.n&&!old.mixes.length)st.sets.splice(st.set,1);useSet(st.sets.indexOf(next))}
+function delSet(){const n=curSet().n;st.sets.splice(st.set,1);if(!st.sets.length)st.sets.push(newSet(""));useSet(Math.min(st.set,st.sets.length-1));toast(`Deleted ${n}`,null,1800)}
+const setLabel=t=>(t.n||"Unsaved mixes")+(t.mixes.length?` (${t.mixes.length})`:"");
 
-function renderSaved(){renderSetBar();const box=$("saved"),cs=curSet();
+// under the chart: the saved mixes, then naming or switching the set, then swapping out a paint
+function renderSaved(){const box=$("saved");if(!box)return;const cs=curSet(),n=cs.mixes.length;
  if(!P.length){box.innerHTML="";return}
- const used=[...new Set(cs.mixes.filter(okMix).flatMap(m=>m.ps))].map(id=>byId[id]).sort(hueSort);
- if(swap&&(!used.some(p=>p.id===swap.from)||(swap.to&&(swap.to===swap.from||!st.sel.includes(swap.to)))))swap=null;
- const n=cs.mixes.length;
- let h=`<div class="savedhead"><span class="flabel">Saved mixes</span>${n?`<span class="note">${n}</span>`:""}</div>`;
- if(!n)h+=`<p class="fine">None yet. ${verb()} a mix on the chart or a strip, then Save it to keep its color and ratio in ${esc(cs.n)}.</p>`;
- else{const from=swap?swap.from:used[0]?.id,tos=st.sel.filter(id=>id!==from).map(id=>byId[id]).sort(hueSort);
-  if(used.length&&tos.length)h+=`<div class="swapbar"><span class="flabel">Compare a swap</span><div class="swsel"><label class="note" for="swFrom">Swap</label><select id="swFrom">${used.map(p=>`<option value="${esc(p.id)}"${p.id===from?" selected":""}>${esc(nameIn(p,used))}</option>`).join("")}</select>
-<label class="note" for="swTo">for</label><select id="swTo"><option value="">another palette paint…</option>${tos.map(p=>`<option value="${esc(p.id)}"${swap&&p.id===swap.to?" selected":""}>${esc(nameIn(p,tos))}</option>`).join("")}</select></div></div>`;
-  h+=`<ol class="smixes">${cs.mixes.map((m,i)=>{if(!okMix(m))return"";const ps=mixOf(m),hex=hexOf(labOf(m)),r=swappedOf(m),out=m.ps.some(id=>!st.sel.includes(id));
-   let cmp="";if(r)cmp=r.ps.length<2?`<p class="scmp note">The closest is pure ${esc(r.ps[0].n)} (${closeness(r.d)}), so this mix stays as it is.</p>`
-    :`<button class="scmp" data-cmp="${i}"><span class="sw" style="background:${hexOf(r.lab)}"></span><span class="st"><span class="sr"><b>${esc(partsTxt(r.ps,r.w))}</b></span><span class="note">Closest match with ${esc(byId[swap.to].n)}: ${closeness(r.d)}</span></span></button>`;
-   else if(swap&&swap.to)cmp=`<p class="scmp note">Doesn't use ${esc(byId[swap.from].n)}.</p>`;
-   return `<li class="smix${swap&&swap.to&&!r?" dim":""}"><button class="sopen" data-i="${i}"><span class="snum">${i+1}</span><span class="sw" style="background:${hex}"></span><span class="st"><span class="sn">${esc(m.n)}</span><span class="sr">${esc(partsTxt(ps,m.w))}${out?' <span class="note">· not in palette</span>':""}</span></span></button>
-<span class="sord"><button data-up="${i}" aria-label="Move ${esc(m.n)} up"${i?"":" disabled"}>↑</button><button data-dn="${i}" aria-label="Move ${esc(m.n)} down"${i<n-1?"":" disabled"}>↓</button></span>${cmp}</li>`}).join("")}</ol>`;
-  if(swap&&swap.to){const k=cs.mixes.filter(m=>{const r=swappedOf(m);return r&&r.ps.length>1}).length,to=byId[swap.to];
-   h+=`<div class="swapbtns"><p class="fine">${k?`Using ${esc(to.n)} changes ${k} mix${k===1?"":"es"} to ${k===1?"its":"their"} closest match.`:`None of these mixes can use ${esc(to.n)} instead.`}</p>
-<button class="primary" data-act="keep"${k?"":" disabled"}>Use ${esc(shortName(to))} in this set</button><button data-act="variant"${k?"":" disabled"}>Save as a new set</button><button class="link" data-act="cancel">Cancel</button></div>`}}
- box.innerHTML=h;
- const pick=()=>{const f=$("swFrom").value,t=$("swTo").value;swap={from:f,to:t&&t!==f?t:null};renderMix()};
- if($("swFrom")){$("swFrom").onchange=pick;$("swTo").onchange=pick}
+ let h=`<h3 class="savedh">Saved mixes${cs.n?` <span class="note">· ${esc(cs.n)}</span>`:""}</h3>`;
+ h+=n?`<ol class="smixes">${cs.mixes.map((m,i)=>{if(!okMix(m))return"";const out=m.ps.some(id=>!st.sel.includes(id));
+   return `<li><button class="sopen" data-i="${i}"><span class="snum">${i+1}</span><span class="sw" style="background:${hexOf(labOf(m))}"></span><span class="st"><span class="sn">${esc(m.n)}</span><span class="sr">${esc(partsTxt(mixOf(m),m.w))}${out?" · not in palette":""}</span></span></button></li>`}).join("")}</ol>`
+  :`<p class="fine">${verb()} a mix on the chart${st.mix3?"":" or a strip"}, then Save it to keep its color and ratio here.</p>`;
+ box.innerHTML=h+`<div class="setrow" id="setRow"></div>`+swapHtml();
  box.querySelectorAll("[data-i]").forEach(b=>b.onclick=e=>openSaved(cs.mixes[+b.dataset.i],e.clientY));
+ renderSetRow();wireSwap(box)}
+
+function renderSetRow(){const row=$("setRow"),cs=curSet(),n=cs.mixes.length;
+ if(setMode==="name"){
+  row.innerHTML=`<label class="flabel" for="setName">${cs.n?"Rename this mix set":"Name this mix set"}</label><div class="setform"><input id="setName" class="txt" maxlength="60" autocomplete="off" placeholder="e.g. Harbor study" value="${esc(cs.n)}"><button data-act="ok">Save</button><button class="link" data-act="no">Cancel</button></div>`;
+  const inp=$("setName"),ok=()=>{const v=inp.value.trim().slice(0,60);if(!v){inp.focus();return}const was=cs.n;cs.n=v;setMode=null;save();renderSaved();toast(was?`Renamed to ${v}`:`Saved as ${v}`,null,1800)},
+   no=()=>{setMode=null;renderSetRow()};
+  inp.onkeydown=e=>{if(e.key==="Enter")ok();else if(e.key==="Escape"){e.stopPropagation();no()}};
+  row.querySelector("[data-act=ok]").onclick=ok;row.querySelector("[data-act=no]").onclick=no;inp.focus();inp.select();return}
+ if(setMode==="delete"){
+  row.innerHTML=`<p class="setask">Delete <b>${esc(cs.n)}</b> and its ${n} saved mix${n===1?"":"es"}?</p><div class="setform"><button data-act="yes">Delete</button><button class="link" data-act="no">Keep it</button></div>`;
+  row.querySelector("[data-act=yes]").onclick=delSet;row.querySelector("[data-act=no]").onclick=()=>{setMode=null;renderSetRow()};return}
+ const others=st.sets.length>1;
+ if(!cs.n){row.innerHTML=!n&&!others?"":`${n?'<button data-act="name">Save as a mix set</button>':""}${others?`<select id="setSel" aria-label="Open a mix set"><option value="" selected>Open a mix set…</option>${st.sets.map((t,i)=>i===st.set?"":`<option value="${i}">${esc(setLabel(t))}</option>`).join("")}</select>`:""}`}
+ else row.innerHTML=`<label class="flabel" for="setSel">Mix set</label><select id="setSel">${st.sets.map((t,i)=>`<option value="${i}"${i===st.set?" selected":""}>${esc(setLabel(t))}</option>`).join("")}
+<option disabled>──────────</option><option value="new">Start a new mix set</option><option value="ren">Rename ${esc(cs.n)}…</option><option value="del">Delete ${esc(cs.n)}…</option></select>`;
+ row.querySelector("[data-act=name]")?.addEventListener("click",()=>{setMode="name";renderSetRow()});
+ const sel=$("setSel");if(!sel)return;
+ sel.onchange=()=>{const v=sel.value;
+  if(v==="new"){const t=newSet("");t.mix=[...st.mix];t.mix3=st.mix3;st.sets.push(t);selectSet(st.sets.length-1);toast("Started a new mix set",null,1600)}
+  else if(v==="ren"){setMode="name";renderSetRow()}
+  else if(v==="del"){if(n){setMode="delete";renderSetRow()}else delSet()}
+  else if(v!=="")selectSet(+v)}}
+
+function swapHtml(){const cs=curSet(),used=[...new Set(cs.mixes.filter(okMix).flatMap(m=>m.ps))].map(id=>byId[id]).sort(hueSort);
+ if(swap&&(!used.some(p=>p.id===swap.from)||(swap.to&&(swap.to===swap.from||!st.sel.includes(swap.to)))))swap=null;
+ const from=swap?swap.from:used[0]?.id,tos=st.sel.filter(id=>id!==from).map(id=>byId[id]).sort(hueSort);
+ if(!used.length||!tos.length)return"";
+ let h=`<details class="swapbox" id="swapBox"${swapOpen?" open":""}><summary>Swap out a paint</summary>
+<p class="fine">See how your saved mixes would change with another paint from your palette, and the ratio that gets closest to each color.</p>
+<div class="swsel"><label class="note" for="swFrom">Swap</label><select id="swFrom">${used.map(p=>`<option value="${esc(p.id)}"${p.id===from?" selected":""}>${esc(nameIn(p,used))}</option>`).join("")}</select>
+<label class="note" for="swTo">for</label><select id="swTo"><option value="">Choose a paint…</option>${tos.map(p=>`<option value="${esc(p.id)}"${swap&&p.id===swap.to?" selected":""}>${esc(nameIn(p,tos))}</option>`).join("")}</select></div>`;
+ if(swap&&swap.to){const to=byId[swap.to],fromP=byId[swap.from];let k=0,skip=0;
+  const rows=cs.mixes.map((m,i)=>{const r=swappedOf(m);if(!r){if(okMix(m))skip++;return""}
+   if(r.ps.length<2)return `<li class="note swone">${i+1}. ${esc(m.n)}: the closest is just ${esc(r.ps[0].n)}, so it stays as it is.</li>`;k++;
+   return `<li><button class="sopen" data-cmp="${i}"><span class="snum">${i+1}</span><span class="sw" style="background:${hexOf(labOf(m))}" title="Now"></span><span class="arr" aria-hidden="true">→</span><span class="sw" style="background:${hexOf(r.lab)}" title="With ${esc(to.n)}"></span><span class="st"><span class="sn">${esc(m.n)}</span><span class="sr">${esc(partsTxt(r.ps,r.w))}</span><span class="note">${closeness(r.d)}</span></span></button></li>`}).join("");
+  h+=`<ol class="smixes swres">${rows}</ol>${skip?`<p class="fine">${skip} other mix${skip===1?" doesn't":"es don't"} use ${esc(fromP.n)}.</p>`:""}
+<div class="swapbtns"><button class="primary" data-act="keep"${k?"":" disabled"}>Use ${esc(shortName(to))} in ${cs.n?esc(cs.n):"these mixes"}</button><button data-act="variant"${k?"":" disabled"}>Save as a new mix set</button><button class="link" data-act="cancel">Cancel</button></div>`}
+ return h+"</details>"}
+function wireSwap(box){const d=$("swapBox");if(!d)return;const cs=curSet();
+ d.addEventListener("toggle",()=>{swapOpen=d.open;if(!d.open&&swap){swap=null;renderMix()}});
+ const pick=()=>{const f=$("swFrom").value,t=$("swTo").value;swap={from:f,to:t&&t!==f?t:null};renderMix()};
+ $("swFrom").onchange=pick;$("swTo").onchange=pick;
  box.querySelectorAll("[data-cmp]").forEach(b=>b.onclick=e=>{const r=swappedOf(cs.mixes[+b.dataset.cmp]);openMix(r.ps,r.w,e.clientY,{keep:true})});
- const move=(i,j)=>{[cs.mixes[i],cs.mixes[j]]=[cs.mixes[j],cs.mixes[i]];save();renderMix();box.querySelector(`[data-${j<i?"up":"dn"}="${j}"]`)?.focus()};
- box.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>move(+b.dataset.up,+b.dataset.up-1));
- box.querySelectorAll("[data-dn]").forEach(b=>b.onclick=()=>move(+b.dataset.dn,+b.dataset.dn+1));
  box.querySelector("[data-act=keep]")?.addEventListener("click",()=>{const to=byId[swap.to],k=applySwap(cs);st.mix=swapIds(st.mix);
-  swap=null;if(sheetCtx&&sheetCtx.kind==="mix")closeSheet();save();renderMix();toast(`${to.n} now in ${k} mix${k===1?"":"es"}`,null,2000)});
+  swap=null;swapOpen=false;if(sheetCtx&&sheetCtx.kind==="mix")closeSheet();save();renderMix();toast(`${to.n} now in ${k} mix${k===1?"":"es"}`,null,2000)});
  box.querySelector("[data-act=variant]")?.addEventListener("click",()=>{const to=byId[swap.to],t=clone(cs);
-  t.n=`${cs.n} · ${shortName(to)}`.slice(0,60);t.mix=swapIds(st.mix);t.mix3=st.mix3;applySwap(t);
+  t.n=(cs.n?`${cs.n} · ${shortName(to)}`:`With ${shortName(to)}`).slice(0,60);t.mix=swapIds(st.mix);t.mix3=st.mix3;applySwap(t);
   st.sets.splice(st.set+1,0,t);selectSet(st.set+1);toast(`Saved ${t.n}`,null,2000)});
- box.querySelector("[data-act=cancel]")?.addEventListener("click",()=>{swap=null;renderMix()})}
+ box.querySelector("[data-act=cancel]")?.addEventListener("click",()=>{swap=null;swapOpen=false;renderMix()})}
 // replace the swapped-out paint in a list of ids, and each affected mix with its closest match
 const swapIds=ids=>[...new Set(ids.map(id=>id===swap.from?swap.to:id))];
 function applySwap(t){let k=0;t.mixes.forEach(m=>{const r=swappedOf(m);if(r&&r.ps.length>1){m.ps=r.ps.map(p=>p.id);m.w=[...r.w];k++}});return k}
@@ -108,14 +116,14 @@ function openSaved(m,y){openMix(mixOf(m),m.w,y,{saved:m,keep:true})}
 
 // the save controls at the bottom of a mix's sheet
 function saveBox(c){const cs=curSet();if(c.saved&&!cs.mixes.includes(c.saved))c.saved=null;const i=c.saved?cs.mixes.indexOf(c.saved):-1;
- return `<div class="savebox"><label class="flabel" for="mixName">${i>=0?`Mix ${i+1} in ${esc(cs.n)}`:`Save to ${esc(cs.n)}`}</label>
+ return `<div class="savebox"><label class="flabel" for="mixName">${i>=0?`Saved mix ${i+1}`:"Save this mix"}</label>
 <input id="mixName" class="txt" maxlength="60" autocomplete="off" placeholder="Name it, e.g. shadow side of the boat" value="${i>=0?esc(c.saved.n):""}">
 <div class="savebtns">${i>=0?'<button data-act="upd">Update ratio</button><button data-act="new">Save as new</button><button class="link" data-act="del">Delete</button>':'<button class="primary" data-act="save">Save mix</button>'}</div></div>`}
 function wireSaveBox(c){const cs=curSet(),inp=$("mixName"),b=a=>sheet.querySelector(`.savebtns [data-act=${a}]`);
  // a saved mix keeps only the paints it uses
  const used=()=>{const ks=c.w.map((v,k)=>v?k:-1).filter(k=>k>=0);return{ps:ks.map(k=>c.ps[k].id),w:ks.map(k=>c.w[k])}};
  const after=msg=>{save();renderMix();drawSheet();toast(msg,null,1600)};
- const add=at=>{const m={n:inp.value.trim().slice(0,60)||"Mix "+(cs.mixes.length+1),...used()};cs.mixes.splice(at,0,m);c.saved=m;c.ps=mixOf(m);c.w=[...m.w];after(`Saved to ${cs.n}`)};
+ const add=at=>{const m={n:inp.value.trim().slice(0,60)||"Mix "+(cs.mixes.length+1),...used()};cs.mixes.splice(at,0,m);c.saved=m;c.ps=mixOf(m);c.w=[...m.w];after(cs.n?`Saved to ${cs.n}`:"Mix saved")};
  if(c.saved){const m=c.saved;
   inp.addEventListener("input",()=>{const v=inp.value.trim().slice(0,60);if(v){m.n=v;save();renderSaved()}});
   b("upd").onclick=()=>{Object.assign(m,used());c.ps=mixOf(m);c.w=[...m.w];after("Updated "+m.n)};

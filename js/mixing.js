@@ -24,6 +24,7 @@ function renderMix(){
  if(st.mix3||!st.mix.includes(mixFocus))mixFocus=null;
  const ms=st.mix.map(id=>byId[id]).sort(hueSort),bars=$("bars");bars.innerHTML="";
  bars.appendChild(mixChart(ms));
+ const sv=document.createElement("section");sv.id="saved";sv.className="saved";sv.setAttribute("aria-label","Saved mixes");bars.appendChild(sv);
  const tri=st.mix3&&ms.length===3;
  if(!tri&&ms.length>1){const pw=document.createElement("div");pw.className="pairs";pw.id="pairs";bars.appendChild(pw);renderPairs(ms)}
  // keep an open recipe only while its paints are still in the mix

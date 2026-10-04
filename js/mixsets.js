@@ -41,13 +41,19 @@ const setLabel=t=>(t.n||"Unsaved mixes")+(t.mixes.length?` (${t.mixes.length})`:
 
 // under the chart: the saved mixes, then naming or switching the set, then swapping out a paint
 function renderSaved(){const box=$("saved");if(!box)return;const cs=curSet(),n=cs.mixes.length;
+ // the toggle event comes a moment after a click, so read the section's state before redrawing it
+ const was=$("swapBox");if(was)swapOpen=was.open;
  if(!P.length){box.innerHTML="";return}
  let h=`<h3 class="savedh">Saved mixes${cs.n?` <span class="note">· ${esc(cs.n)}</span>`:""}</h3>`;
  h+=n?`<ol class="smixes">${cs.mixes.map((m,i)=>{if(!okMix(m))return"";const out=m.ps.some(id=>!st.sel.includes(id));
-   return `<li><button class="sopen" data-i="${i}"><span class="snum">${i+1}</span><span class="sw" style="background:${hexOf(labOf(m))}"></span><span class="st"><span class="sn">${esc(m.n)}</span><span class="sr">${esc(partsTxt(mixOf(m),m.w))}${out?" · not in palette":""}</span></span></button></li>`}).join("")}</ol>`
+   return `<li class="srow"><button class="sopen" data-i="${i}"><span class="snum">${i+1}</span><span class="sw" style="background:${hexOf(labOf(m))}"></span><span class="st"><span class="sn">${esc(m.n)}</span><span class="sr">${esc(partsTxt(mixOf(m),m.w))}${out?" · not in palette":""}</span></span></button>${n>1?`<span class="sord"><button data-up="${i}" aria-label="Move ${esc(m.n)} up"${i?"":" disabled"}>↑</button><button data-dn="${i}" aria-label="Move ${esc(m.n)} down"${i<n-1?"":" disabled"}>↓</button></span>`:""}</li>`}).join("")}</ol>`
   :`<p class="fine">${verb()} a mix on the chart${st.mix3?"":" or a strip"}, then Save it to keep its color and ratio here.</p>`;
  box.innerHTML=h+`<div class="setrow" id="setRow"></div>`+swapHtml();
  box.querySelectorAll("[data-i]").forEach(b=>b.onclick=e=>openSaved(cs.mixes[+b.dataset.i],e.clientY));
+ // moving a mix renumbers it on the chart too; keep focus on the arrow that moved with it
+ const move=(i,j)=>{[cs.mixes[i],cs.mixes[j]]=[cs.mixes[j],cs.mixes[i]];save();renderMix();$("saved").querySelector(`[data-${j<i?"up":"dn"}="${j}"]:not(:disabled)`)?.focus()};
+ box.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>move(+b.dataset.up,+b.dataset.up-1));
+ box.querySelectorAll("[data-dn]").forEach(b=>b.onclick=()=>move(+b.dataset.dn,+b.dataset.dn+1));
  renderSetRow();wireSwap(box)}
 
 function renderSetRow(){const row=$("setRow"),cs=curSet(),n=cs.mixes.length;
@@ -79,13 +85,13 @@ function swapHtml(){const cs=curSet(),used=[...new Set(cs.mixes.filter(okMix).fl
  let h=`<details class="swapbox" id="swapBox"${swapOpen?" open":""}><summary>Swap out a paint</summary>
 <p class="fine">See how your saved mixes would change with another paint from your palette, and the ratio that gets closest to each color.</p>
 <div class="swsel"><label class="note" for="swFrom">Swap</label><select id="swFrom">${used.map(p=>`<option value="${esc(p.id)}"${p.id===from?" selected":""}>${esc(nameIn(p,used))}</option>`).join("")}</select>
-<label class="note" for="swTo">for</label><select id="swTo"><option value="">Choose a paint…</option>${tos.map(p=>`<option value="${esc(p.id)}"${swap&&p.id===swap.to?" selected":""}>${esc(nameIn(p,tos))}</option>`).join("")}</select></div>`;
+<label class="note" for="swTo">for</label><select id="swTo"><option value="">Choose a paint…</option>${tos.map(p=>`<option value="${esc(p.id)}"${swap&&p.id===swap.to?" selected":""}>${esc(nameIn(p,tos))}</option>`).join("")}</select>${swap&&swap.to?'<button class="link swclear" data-act="clear">Clear swap</button>':""}</div>`;
  if(swap&&swap.to){const to=byId[swap.to],fromP=byId[swap.from];let k=0,skip=0;
   const rows=cs.mixes.map((m,i)=>{const r=swappedOf(m);if(!r){if(okMix(m))skip++;return""}
    if(r.ps.length<2)return `<li class="note swone">${i+1}. ${esc(m.n)}: the closest is just ${esc(r.ps[0].n)}, so it stays as it is.</li>`;k++;
    return `<li><button class="sopen" data-cmp="${i}"><span class="snum">${i+1}</span><span class="sw" style="background:${hexOf(labOf(m))}" title="Now"></span><span class="arr" aria-hidden="true">→</span><span class="sw" style="background:${hexOf(r.lab)}" title="With ${esc(to.n)}"></span><span class="st"><span class="sn">${esc(m.n)}</span><span class="sr">${esc(partsTxt(r.ps,r.w))}</span><span class="note">${closeness(r.d)}</span></span></button></li>`}).join("");
   h+=`<ol class="smixes swres">${rows}</ol>${skip?`<p class="fine">${skip} other mix${skip===1?" doesn't":"es don't"} use ${esc(fromP.n)}.</p>`:""}
-<div class="swapbtns"><button class="primary" data-act="keep"${k?"":" disabled"}>Use ${esc(shortName(to))} in ${cs.n?esc(cs.n):"these mixes"}</button><button data-act="variant"${k?"":" disabled"}>Save as a new mix set</button><button class="link" data-act="cancel">Cancel</button></div>`}
+<div class="swapbtns"><button class="primary" data-act="keep"${k?"":" disabled"}>Use ${esc(shortName(to))} in ${cs.n?esc(cs.n):"these mixes"}</button><button data-act="variant"${k?"":" disabled"}>Save as a new mix set</button><button class="link" data-act="clear">Clear swap</button></div>`}
  return h+"</details>"}
 function wireSwap(box){const d=$("swapBox");if(!d)return;const cs=curSet();
  d.addEventListener("toggle",()=>{swapOpen=d.open;if(!d.open&&swap){swap=null;renderMix()}});
@@ -97,7 +103,8 @@ function wireSwap(box){const d=$("swapBox");if(!d)return;const cs=curSet();
  box.querySelector("[data-act=variant]")?.addEventListener("click",()=>{const to=byId[swap.to],t=clone(cs);
   t.n=(cs.n?`${cs.n} · ${shortName(to)}`:`With ${shortName(to)}`).slice(0,60);t.mix=swapIds(st.mix);t.mix3=st.mix3;applySwap(t);
   st.sets.splice(st.set+1,0,t);selectSet(st.set+1);toast(`Saved ${t.n}`,null,2000)});
- box.querySelector("[data-act=cancel]")?.addEventListener("click",()=>{swap=null;swapOpen=false;renderMix()})}
+// clearing leaves the section open with the menus back at the start
+ box.querySelectorAll("[data-act=clear]").forEach(b=>b.onclick=()=>{swap=null;renderMix();$("swTo")?.focus()})}
 // replace the swapped-out paint in a list of ids, and each affected mix with its closest match
 const swapIds=ids=>[...new Set(ids.map(id=>id===swap.from?swap.to:id))];
 function applySwap(t){let k=0;t.mixes.forEach(m=>{const r=swappedOf(m);if(r&&r.ps.length>1){m.ps=r.ps.map(p=>p.id);m.w=[...r.w];k++}});return k}

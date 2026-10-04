@@ -14,12 +14,24 @@ const $=id=>document.getElementById(id);
 const DEFF={brand:[],lf:[],pig:["any"],trans:[],stain:[],gran:["any"],inf:["inc"],dry:[],series:[],avail:["cur"],light:[0,100]};
 const KEY="wpb:v3";
 const clone=o=>JSON.parse(JSON.stringify(o));
-const blank=()=>({sel:[],base:[],mix:[],mix3:false,f:clone(DEFF)});
+// a mix set is one painting's plan: the paints picked in Mixing (mix, mix3) and its saved mixes,
+// each a name, paint ids and whole-percent shares (w) that add up to 100
+const newSet=n=>({n,mix:[],mix3:false,mixes:[]});
+const blank=()=>({sel:[],base:[],mix:[],mix3:false,f:clone(DEFF),sets:[newSet("My mixes")],set:0});
+function cleanSets(v,s){const txt=(t,d)=>typeof t==="string"&&t.trim()?t.trim().slice(0,60):d;
+ const ids=a=>Array.isArray(a)?a.filter(id=>typeof id==="string"):[];
+ const sets=(Array.isArray(v.sets)?v.sets:[]).filter(o=>o&&typeof o==="object").map((o,i)=>({n:txt(o.n,"Mix set "+(i+1)),mix:ids(o.mix),mix3:!!o.mix3,
+  mixes:(Array.isArray(o.mixes)?o.mixes:[]).filter(m=>m&&typeof m==="object"&&ids(m.ps).length>1&&Array.isArray(m.w)&&m.w.length===m.ps.length&&m.w.every(x=>Number.isInteger(x)&&x>0)&&m.w.reduce((a,b)=>a+b,0)===100)
+   .map((m,k)=>({n:txt(m.n,"Mix "+(k+1)),ps:ids(m.ps),w:[...m.w]}))}));
+ if(!sets.length){const d=newSet("My mixes");d.mix=s.mix;d.mix3=s.mix3;sets.push(d)}
+ s.sets=sets;s.set=Number.isInteger(v.set)&&v.set>=0&&v.set<sets.length?v.set:0;
+ s.mix=[...sets[s.set].mix];s.mix3=sets[s.set].mix3}
 // one medium's saved state; paint ids are checked against the data once that medium loads
 function clean(v){const s=blank();if(!v||typeof v!=="object")return s;
  const ids=a=>Array.isArray(a)?a.filter(id=>typeof id==="string"):[];
  s.sel=ids(v.sel);s.base=ids(v.base);s.mix=ids(v.mix);s.mix3=!!v.mix3;if(Array.isArray(v.sw))s.sw=v.sw.filter(c=>typeof c==="string").slice(0,6);
  if(v.f&&typeof v.f==="object")for(const k in DEFF)if(Array.isArray(DEFF[k])&&Array.isArray(v.f[k]))s.f[k]=v.f[k];
+ cleanSets(v,s);
  if(s.f.light.length!==2)s.f.light=[0,100];if(!s.f.pig.length)s.f.pig=["any"];if(!s.f.gran.length)s.f.gran=["any"];if(!s.f.inf.length)s.f.inf=["inc"];if(!s.f.avail.length)s.f.avail=["cur"];
  return s}
 // S: everything saved. shown: the mediums in the switcher. onboarded: the first-visit questions are done.
@@ -41,7 +53,8 @@ function load(){const S={medium:"watercolor",shown:[],media:{},onboarded:false,n
 const S=load();
 let st=S.media[S.medium]??=blank();
 // the switcher shows a few colors from each palette, so keep them with the palette
-function save(){if(P.length)st.sw=st.sel.slice(0,6).map(id=>byId[id]?.rgb).filter(Boolean);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function save(){const cs=st.sets[st.set];cs.mix=[...st.mix];cs.mix3=st.mix3;
+ if(P.length)st.sw=st.sel.slice(0,6).map(id=>byId[id]?.rgb).filter(Boolean);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const inPal=p=>st.sel.includes(p.id);
 // Staining and granulation filled in from the pigment (see tools/infer_properties.py) are
 // inferred, not the maker's claim. "Brand-stated only" treats them as unknown.

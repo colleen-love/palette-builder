@@ -19,7 +19,9 @@ function useMedium(key,{push=false}={}){const m=MBY[key]||MEDIA[0];want=m.key;
 function apply(e){cur=e.m;({B:BRANDS,P,byId,curveCache,poolCache}=e);DATA=e.data||{brands:[],paints:[]};
  if(e.FULL==null)e.FULL=poolArea(P);FULL=e.FULL;
  S.medium=cur.key;st=S.media[cur.key]??=blank();
- if(P.length){const ok=id=>!!byId[id];st.sel=st.sel.filter(ok);st.base=st.base.filter(ok);st.mix=st.mix.filter(ok)}
+ if(P.length){const ok=id=>!!byId[id];st.sel=st.sel.filter(ok);st.base=st.base.filter(ok);st.mix=st.mix.filter(ok);
+  st.sets.forEach(t=>{t.mix=t.mix.filter(ok);t.mixes=t.mixes.filter(m=>m.ps.every(ok))})}
+ swap=null;
  mixFocus=null;reachKey="";reachMemo={};q.value="";
  allg.replaceChildren(...P.map(p=>p.dot));
  document.body.dataset.medium=cur.key;document.body.classList.toggle("nodata",!P.length);
